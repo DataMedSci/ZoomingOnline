@@ -354,186 +354,71 @@ export function drawLine<T>(
 }
 
 /**
- * Draw a draggable zoom rectangle on the overview chart
- * This rectangle represents the currently selected zoom region
+ * Draw a centered zoom rectangle on the overview chart
+ * This rectangle represents the currently selected zoom region and is always centered
  */
 export function drawZoomRectangle(
   svg: d3.Selection<SVGGElement, unknown, null, undefined>,
   xScale: d3.ScaleLinear<number, number>,
   height: number,
-  zoomPosition: number,
   zoomWidth: number,
   totalTime: number,
-  onPositionChange: (newPosition: number) => void,
-  onDragStart?: () => void,
-  onDragEnd?: () => void,
 ): d3.Selection<SVGRectElement, unknown, null, undefined> {
-  // Calculate rectangle bounds in time units with proper boundary constraints
+  console.log("🟦 drawZoomRectangle called with parameters:");
+  console.log("  - height:", height);
+  console.log("  - zoomWidth:", zoomWidth);
+  console.log("  - totalTime:", totalTime);
+  console.log("  - xScale domain:", xScale.domain());
+  console.log("  - xScale range:", xScale.range());
+
+  // Calculate rectangle bounds in time units - always centered at 0.5
+  const centerTime = totalTime * 0.5; // Always center the rectangle
   const halfWidth = (zoomWidth * totalTime) / 2;
-  let centerTime = zoomPosition * totalTime;
 
   console.log("📐 Rectangle bounds calculation:", {
-    zoomPosition,
-    totalTime,
     centerTime: centerTime,
     halfWidth,
     zoomWidth,
   });
 
-  // Constrain the center position so rectangle edges don't go beyond plot boundaries
-  centerTime = Math.max(halfWidth, Math.min(totalTime - halfWidth, centerTime));
-
   const startTime = centerTime - halfWidth;
   const endTime = centerTime + halfWidth;
+
+  console.log("⏰ Time boundaries:");
+  console.log("  - startTime:", startTime);
+  console.log("  - endTime:", endTime);
+  console.log("  - duration:", endTime - startTime);
 
   // Convert to pixel coordinates
   const x = xScale(startTime);
   const width = xScale(endTime) - x;
-  const chartWidth = xScale.range()[1] || 0;
+
+  console.log("📏 Pixel coordinates:");
+  console.log("  - x (left edge):", x);
+  console.log("  - width:", width);
+  console.log("  - right edge:", x + width);
 
   // Remove any existing zoom rectangle
+  const existingRects = svg.selectAll(".zoom-rect").size();
+  if (existingRects > 0) {
+    console.log("🧹 Removing existing rectangles:", existingRects, "rects");
+  }
   svg.selectAll(".zoom-rect").remove();
-  svg.selectAll(".zoom-rect-hit-area").remove();
 
   // Create the visible rectangle
+  const actualWidth = Math.max(width, 3); // Minimum width of 3 pixels for visibility
+  console.log("🎨 Creating visible rectangle with width:", actualWidth, "(minimum applied:", actualWidth !== width, ")");
+  
   const rect = svg
     .append("rect")
     .attr("class", "zoom-rect")
     .attr("x", x)
     .attr("y", 0)
-    .attr("width", Math.max(width, 3)) // Minimum width of 3 pixels for visibility
+    .attr("width", actualWidth)
     .attr("height", height);
 
-  // Enhanced small rectangle handling
-  const isVerySmallZoom = zoomWidth <= 0.02; // 2% or smaller
-  const minHitAreaWidth = isVerySmallZoom
-    ? Math.max(chartWidth * 0.01, 40)
-    : 20; // 1% of chart width or 40px minimum for very small zooms
-
-  if (width < minHitAreaWidth) {
-    const hitAreaWidth = minHitAreaWidth;
-    let hitAreaX = x - (hitAreaWidth - width) / 2; // Center the hit area on the rectangle
-
-    // Constrain hit area to chart bounds
-    hitAreaX = Math.max(0, Math.min(chartWidth - hitAreaWidth, hitAreaX));
-
-    const hitArea = svg
-      .append("rect")
-      .attr("class", "zoom-rect-hit-area")
-      .attr("x", hitAreaX)
-      .attr("y", 0)
-      .attr("width", hitAreaWidth)
-      .attr("height", height);
-
-    // Apply drag behavior to hit area for small rectangles
-    hitArea.call(
-      createDragBehavior(
-        xScale,
-        totalTime,
-        zoomWidth,
-        onPositionChange,
-        onDragStart,
-        onDragEnd,
-      ),
-    );
-  }
-
-  // Apply drag behavior to the main rectangle
-  rect.call(
-    createDragBehavior(
-      xScale,
-      totalTime,
-      zoomWidth,
-      onPositionChange,
-      onDragStart,
-      onDragEnd,
-    ),
-  );
-
+  console.log("✅ drawZoomRectangle completed successfully (centered, no drag behavior)");
   return rect;
 }
 
-/**
- * Create D3 drag behavior for the zoom rectangle with boundary constraints
- */
-function createDragBehavior(
-  xScale: d3.ScaleLinear<number, number>,
-  totalTime: number,
-  zoomWidth: number,
-  onPositionChange: (newPosition: number) => void,
-  onDragStart?: () => void,
-  onDragEnd?: () => void,
-) {
-  return d3
-    .drag<SVGRectElement, unknown>()
-    .on("start", function () {
-      // Add dragging class for visual feedback
-      const parentElement = this.parentNode as SVGGElement;
-      if (parentElement) {
-        d3.select(parentElement)
-          .selectAll(".zoom-rect")
-          .classed("dragging", true);
-      }
-      // Call external drag start callback
-      if (onDragStart) {
-        onDragStart();
-      }
-    })
-    .on("drag", function (event) {
-      // Get the mouse position relative to the SVG container (not event.x)
-      const svgNode = this.ownerSVGElement;
-      if (!svgNode) return;
 
-      // Get the mouse coordinates relative to the SVG
-      const svgPoint = d3.pointer(event, svgNode);
-      let mouseX = svgPoint[0];
-
-      // Adjust for the chart margins - the main group has a transform applied
-      // We need to subtract the left margin to get coordinates relative to the chart area
-      const parentGroup = this.parentNode as SVGGElement;
-      if (parentGroup) {
-        // Get the transform of the parent group (should be translate(margin.left, margin.top))
-        const transform = parentGroup.getAttribute("transform");
-        if (transform) {
-          const translateMatch = transform.match(
-            /translate\(([^,]+),([^)]+)\)/,
-          );
-          if (translateMatch && translateMatch[1]) {
-            const translateX = parseFloat(translateMatch[1]);
-            mouseX = mouseX - translateX; // Adjust for margin.left
-          }
-        }
-      }
-
-      // Convert back to time using the adjusted mouse position
-      const timeAtMouse = xScale.invert(mouseX);
-
-      // Calculate the half-width in time units
-      const halfWidth = (zoomWidth * totalTime) / 2;
-
-      // Constrain the center position so rectangle edges don't go beyond boundaries
-      const constrainedCenterTime = Math.max(
-        halfWidth,
-        Math.min(totalTime - halfWidth, timeAtMouse),
-      );
-
-      // Convert to position percentage
-      const newPosition = constrainedCenterTime / totalTime;
-
-      // Update the position
-      onPositionChange(newPosition);
-    })
-    .on("end", function () {
-      // Remove dragging class
-      const parentElement = this.parentNode as SVGGElement;
-      if (parentElement) {
-        d3.select(parentElement)
-          .selectAll(".zoom-rect")
-          .classed("dragging", false);
-      }
-      // Call external drag end callback
-      if (onDragEnd) {
-        onDragEnd();
-      }
-    });
-}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, createEventDispatcher } from 'svelte';
+    import { onMount } from 'svelte';
     import { ChartRenderService } from '../../services/chart/ChartRenderService';
     import type { OverviewDataPoint } from '../../services/chart/ChartDataService';
 
@@ -10,8 +10,7 @@
         totalSamples,
         globalYMin,
         globalYMax,
-        zoomLevel = null,
-        zoomPosition = 0
+        zoomLevel = null
     }: {
         data: OverviewDataPoint[];
         totalTime: number;
@@ -19,11 +18,7 @@
         globalYMin: number;
         globalYMax: number;
         zoomLevel?: number | null;
-        zoomPosition?: number; // Now represents sample index (integer)
     } = $props();
-
-    // Event dispatcher for zoom position changes
-    const dispatch = createEventDispatcher();
 
     // Local state using Svelte 5 runes
     let containerRef = $state<HTMLDivElement | undefined>(undefined);
@@ -65,14 +60,8 @@
             totalSamples,
             globalYMin,
             globalYMax,
-            zoomLevel,
-            zoomPosition,
-            onZoomPositionChange: handleZoomPositionChange
+            zoomLevel
         });
-    }
-
-    function handleZoomPositionChange(newPosition: number): void {
-        dispatch('zoomPositionChange', { position: newPosition });
     }
 </script>
 
@@ -86,25 +75,25 @@
 <style>
     /* Global D3 chart styles that can't be easily replaced with Tailwind */
     :global(.grid line) {
-        stroke: theme(colors.gray.200);
+        stroke: #e5e7eb;
         stroke-dasharray: 2,2;
         opacity: 0.7;
     }
     
     :global(.axis) {
-        color: theme(colors.gray.500);
+        color: #6b7280;
         font-size: 11px;
     }
     
     :global(.axis path),
     :global(.axis line) {
-        stroke: theme(colors.gray.400);
+        stroke: #9ca3af;
     }
     
     :global(.area) {
-        fill: theme(colors.blue.500);
+        fill: #3b82f6;
         fill-opacity: 0.3;
-        stroke: theme(colors.blue.500);
+        stroke: #3b82f6;
         stroke-width: 1.5px;
     }
 </style>

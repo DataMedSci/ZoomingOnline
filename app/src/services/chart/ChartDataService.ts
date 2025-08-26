@@ -15,19 +15,17 @@ export interface OverviewDataPoint {
  */
 export class ChartDataService {
   /**
-   * Calculate the time domain for zoom based on zoom level and position
+   * Calculate the time domain for zoom based on zoom level with centered position
    * @param totalTime Total time span of the data
    * @param zoomLevel Time span of the zoom window in seconds
-   * @param position Position within the data (0-1 range, where 0.5 is center)
-   * @returns Start and end times for the zoom window
+   * @returns Start and end times for the zoom window (always centered)
    */
   static calculateZoomDomain(
     totalTime: number,
     zoomLevel: number,
-    position: number,
   ): ZoomDomain {
     const halfWindow = zoomLevel / 2;
-    const centerTime = position * totalTime;
+    const centerTime = totalTime * 0.5; // Always center the zoom
 
     let startTime = Math.max(0, centerTime - halfWindow);
     let endTime = Math.min(totalTime, centerTime + halfWindow);
@@ -85,18 +83,15 @@ export class ChartDataService {
   /**
    * Validate zoom parameters
    * @param zoomLevel Zoom level in seconds
-   * @param position Position (0-1 range)
    * @param totalTime Total time span
    * @returns Whether the parameters are valid
    */
   static validateZoomParameters(
     zoomLevel: number | null,
-    position: number,
     totalTime: number,
   ): boolean {
     if (zoomLevel === null) return true; // No zoom is valid
     if (zoomLevel <= 0 || zoomLevel > totalTime) return false;
-    if (position < 0 || position > 1) return false;
     return true;
   }
 

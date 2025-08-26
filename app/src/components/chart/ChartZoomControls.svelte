@@ -3,14 +3,13 @@
     import { generateZoomLevelsWithLabels } from '../../utils/zoomLevels';
     
     // Props using Svelte 5 runes syntax
-    let { timeBetweenPoints, segmentDuration, totalSamples, currentZoomPosition = 0 } = $props();
+    let { timeBetweenPoints, segmentDuration, totalSamples } = $props();
 
     // Event dispatcher
     const dispatch = createEventDispatcher();
 
     // State using $state rune
     let selectedZoomLevel = $state();
-    let zoomPosition = $state(50);
     let defaultSet = $state(false);
 
     // Generate zoom levels dynamically based on data characteristics
@@ -73,8 +72,8 @@
         
         if (newZoomLevel !== undefined) {
             selectedZoomLevel = newZoomLevel;
-            // Use current zoom position to maintain position during zoom change
-            dispatch('zoomLevelChange', { zoomLevel: newZoomLevel, position: currentZoomPosition });
+            // No position parameter needed since rectangle is always centered
+            dispatch('zoomLevelChange', { zoomLevel: newZoomLevel, position: 0 });
         }
     }
 
@@ -94,8 +93,8 @@
         
         if (newZoomLevel !== undefined) {
             selectedZoomLevel = newZoomLevel;
-            // Use current zoom position to maintain position during zoom change
-            dispatch('zoomLevelChange', { zoomLevel: newZoomLevel, position: currentZoomPosition });
+            // No position parameter needed since rectangle is always centered
+            dispatch('zoomLevelChange', { zoomLevel: newZoomLevel, position: 0 });
         }
     }
 
@@ -112,8 +111,8 @@
     function handleDropdownChange(event) {
         const newLevel = parseFloat(event.target.value);
         selectedZoomLevel = newLevel;
-        // Use current zoom position to maintain position during zoom change
-        dispatch('zoomLevelChange', { zoomLevel: newLevel, position: currentZoomPosition });
+        // No position parameter needed since rectangle is always centered
+        dispatch('zoomLevelChange', { zoomLevel: newLevel, position: 0 });
     }
 </script>
 

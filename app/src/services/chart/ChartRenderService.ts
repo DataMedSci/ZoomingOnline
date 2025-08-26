@@ -15,8 +15,6 @@ export interface OverviewRenderConfig {
   globalYMin: number;
   globalYMax: number;
   zoomLevel?: number | null;
-  zoomPosition?: number; // Now represents sample index (integer)
-  onZoomPositionChange?: (position: number) => void;
 }
 
 export interface DetailRenderConfig {
@@ -96,25 +94,13 @@ export class ChartRenderService {
     ) {
       const zoomWidth = config.zoomLevel / config.totalTime; // Convert to fraction
 
-      // Convert sample index to 0-1 position fraction for drawing
-      const sampleIndex =
-        config.zoomPosition ?? Math.floor(config.totalSamples / 2);
-      const positionFraction = sampleIndex / (config.totalSamples - 1); // Convert sample index to 0-1 range
-
+      // Rectangle is always centered - position parameter is ignored
       drawZoomRectangle(
         this.svg,
         xScale,
         height,
-        positionFraction,
         zoomWidth,
         config.totalTime,
-        // Convert callback from fraction back to sample index
-        (newPositionFraction: number) => {
-          const newSampleIndex = Math.round(
-            newPositionFraction * (config.totalSamples - 1),
-          );
-          config.onZoomPositionChange?.(newSampleIndex);
-        },
       );
     }
   }

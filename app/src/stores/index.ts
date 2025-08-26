@@ -34,7 +34,6 @@ export {
   isLoading,
   error,
   showCopyLink,
-  zoomPosition,
   zoomWidth,
   plotConfig,
 } from "./appState";

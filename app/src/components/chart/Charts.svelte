@@ -17,7 +17,6 @@
 
     // Local zoom state - no global store needed!
     let zoomLevel = $state<number | null>(null);
-    let zoomPosition = $state<number>(0); // Changed to sample index (integer)
 
     // Derived values using Svelte 5 $derived with proper typing
     const state = $derived($appState);
@@ -83,21 +82,13 @@
 
     // Optimized zoom handlers with proper TypeScript typing
     function handleZoomLevelChange(event: CustomEvent<{ zoomLevel: number; position: number }>): void {
-        const { zoomLevel: newLevel, position } = event.detail;
+        const { zoomLevel: newLevel } = event.detail;
         zoomLevel = newLevel;
-        zoomPosition = position;
-        console.log(`Zoom changed to level ${newLevel} at sample ${position}`);
-    }
-
-    function handleZoomPositionChange(event: CustomEvent<{ position: number }>): void {
-        zoomPosition = event.detail.position;
-        console.log(`Zoom position changed to sample ${zoomPosition} via draggable rectangle`);
+        console.log(`Zoom changed to level ${newLevel}`);
     }
 
     function handleZoomReset(): void {
         zoomLevel = null;
-        // Reset to middle sample position
-        zoomPosition = plotData ? Math.floor(plotData.no_of_samples / 2) : 0;
         console.log('Zoom reset to overview');
     }
 
@@ -130,8 +121,6 @@
                             globalYMin={plotData.globalYMin ?? 0}
                             globalYMax={plotData.globalYMax ?? 1}
                             {zoomLevel}
-                            {zoomPosition}
-                            on:zoomPositionChange={handleZoomPositionChange}
                         />
                     {/if}
                 </div>
@@ -145,7 +134,6 @@
                     timeBetweenPoints={plotData.horiz_interval}
                     segmentDuration={plotData.total_time_s}
                     totalSamples={plotData.no_of_samples}
-                    currentZoomPosition={zoomPosition}
                     on:zoomLevelChange={handleZoomLevelChange}
                     on:zoomReset={handleZoomReset}
                     on:reloadData={handleReloadData}
