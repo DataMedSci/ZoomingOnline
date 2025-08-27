@@ -27,7 +27,7 @@ app/
 ### Prerequisites
 
 - Node.js 24+ (specified in GitHub Actions)
-- npm (comes with Node.js)
+- pnpm (recommended package manager)
 
 ### Setup Development Environment
 
@@ -40,15 +40,15 @@ cd app
 **Manual Setup:**
 
 ```bash
-npm install
+pnpm install
 ```
 
 ```bash
-npm run validate  # Verify setup
+pnpm run validate  # Verify setup
 ```
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Open browser to http://localhost:5173
@@ -68,18 +68,18 @@ Open browser to http://localhost:5173
 - **Routing**: Uses a custom internal router (`src/router.ts`) optimized for Svelte 5 with proper Vite base path support (`/ZoomingOnline/`)
 - **URL synchronization**: Components use the `updateQuery` helper for URL search parameter updates without re-entrant route changes
   | ---------------------- | ------------------------ | ------------------------------------ |
-  | `npm run dev` | Start development server | Local development with hot reload |
-  | `npm run build` | Production build | Generates optimized build in `dist/` |
-  | `npm run preview` | Preview production build | Test production build locally |
-  | `npm run check` | TypeScript type checking | Validate types with svelte-check |
-  | `npm run check:watch` | Watch mode type checking | Continuous type validation |
-  | `npm run lint` | Run ESLint | Check code quality and style |
-  | `npm run lint:fix` | Fix ESLint issues | Automatically fix linting problems |
-  | `npm run format` | Format code | Apply Prettier formatting |
-  | `npm run format:check` | Check formatting | Verify code is properly formatted |
-  | `npm run validate` | Run all quality checks | Complete validation pipeline |
-  | `npm run test:unit` | Run unit tests | Vitest-based unit tests |
-  | `npm run test:headed` | Run E2E tests (headed) | Playwright browser tests with UI |
+  | `pnpm run dev` | Start development server | Local development with hot reload |
+  | `pnpm run build` | Production build | Generates optimized build in `dist/` |
+  | `pnpm run preview` | Preview production build | Test production build locally |
+  | `pnpm run check` | TypeScript type checking | Validate types with svelte-check |
+  | `pnpm run check:watch` | Watch mode type checking | Continuous type validation |
+  | `pnpm run lint` | Run ESLint | Check code quality and style |
+  | `pnpm run lint:fix` | Fix ESLint issues | Automatically fix linting problems |
+  | `pnpm run format` | Format code | Apply Prettier formatting |
+  | `pnpm run format:check` | Check formatting | Verify code is properly formatted |
+  | `pnpm run validate` | Run all quality checks | Complete validation pipeline |
+  | `pnpm run test:unit` | Run unit tests | Vitest-based unit tests |
+  | `pnpm run test:headed` | Run E2E tests (headed) | Playwright browser tests with UI |
 
 ## 🔧 Development Tools
 
@@ -114,11 +114,11 @@ See [../docs/linting.md](../docs/linting.md) for detailed linting setup and conf
 ### Development Server
 
 ```bash
-npm run dev -- --port 3000
+pnpm run dev -- --port 3000
 ```
 
 ```bash
-npm run dev -- --host 0.0.0.0
+pnpm run dev -- --host 0.0.0.0
 ```
 
 ## 🧪 Testing
@@ -126,23 +126,23 @@ npm run dev -- --host 0.0.0.0
 ### TypeScript Type Checking
 
 ```bash
-npm run check
+pnpm run check
 ```
 
 ```bash
-npm run check:watch
+pnpm run check:watch
 ```
 
 ### Unit Tests with Vitest
 
 ```bash
-npm run test:unit
+pnpm run test:unit
 ```
 
 ### E2E Tests with Playwright
 
 ```bash
-npm run test:headed
+pnpm run test:headed
 ```
 
 ```bash
@@ -289,11 +289,11 @@ The frontend expects Zarr datasets with this structure:
 ### Production Build
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ```bash
-npm run preview
+pnpm run preview
 ```
 
 ### Build Output
@@ -317,11 +317,11 @@ The production build generates:
 ### Development Tools
 
 ```bash
-npm run build -- --sourcemap
+pnpm run build -- --sourcemap
 ```
 
 ```bash
-npm run build -- --mode analyze
+pnpm run build -- --mode analyze
 ```
 
 ### Browser DevTools
@@ -401,8 +401,8 @@ export default {
 1. Create feature branch from `main`
 2. Implement feature in `src/`
 3. Add E2E tests in `tests/`
-4. Test with `npm test`
-5. Build with `npm run build`
+4. Test with `pnpm test`
+5. Build with `pnpm run build`
 6. Submit pull request
 
 ### Code Style
@@ -432,11 +432,11 @@ git push origin feature/new-visualization
 ```
 
 ```bash
-npm test
+pnpm test
 ```
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## 📈 Analytics and Monitoring
@@ -454,7 +454,7 @@ npx lighthouse-ci autorun
 ```
 
 ```bash
-npm run build -- --analyze
+pnpm run build -- --analyze
 ```
 
 ---

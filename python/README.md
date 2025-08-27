@@ -170,7 +170,7 @@ cd app
 ```
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Access app at http://localhost:5173  
