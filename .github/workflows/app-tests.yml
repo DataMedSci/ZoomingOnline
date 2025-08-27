@@ -62,7 +62,7 @@ jobs:
       - name: Start preview server
         working-directory: ./app
         run: |
-          pnpm run preview -- --port 5173 --strictPort --host &
+          pnpm run preview --port 5173 --strictPort --host &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
       
       # Step 9: Wait for server to be ready
