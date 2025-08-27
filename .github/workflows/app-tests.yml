@@ -27,15 +27,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
-          cache-dependency-path: 'app/pnpm-lock.yaml'
 
-      # Step 3: Install project dependencies
+      # Step 3: Setup pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      # Step 4: Install project dependencies
       - name: Install Node.js dependencies
         working-directory: ./app
         run: pnpm install --frozen-lockfile
 
-      # Step 4: Cache Playwright browsers to speed up CI
+      # Step 5: Cache Playwright browsers to speed up CI
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -44,34 +48,34 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      # Step 5: Install Playwright browser binaries
+      # Step 6: Install Playwright browser binaries
       - name: Install Playwright browsers
         working-directory: ./app
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
 
-      # Step 6: Build the application for production-like testing
+      # Step 7: Build the application for production-like testing
       - name: Build application
         working-directory: ./app
         run: pnpm run build
 
-      # Step 7: Start the preview server in background
+      # Step 8: Start the preview server in background
       - name: Start preview server
         working-directory: ./app
         run: |
           pnpm run preview -- --port 5173 --strictPort --host &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
       
-      # Step 8: Wait for server to be ready
+      # Step 9: Wait for server to be ready
       - name: Wait for server
         working-directory: ./app
-        run: npx wait-on http://localhost:5173/ --timeout 10000
+        run: pnpm exec wait-on http://localhost:5173/ --timeout 10000
 
-      # Step 9: Run browser tests
+      # Step 10: Run browser tests
       - name: Run browser tests with local data
         working-directory: ./app
-        run: npx playwright test --reporter=line --timeout=30000
+        run: pnpm exec playwright test --reporter=line --timeout=30000
 
-      # Step 10: Upload test artifacts (reports, screenshots) if tests fail
+      # Step 11: Upload test artifacts (reports, screenshots) if tests fail
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()  # Upload even if tests fail
@@ -82,7 +86,7 @@ jobs:
             app/*.png
           retention-days: 30
 
-      # Step 11: Stop the preview server
+      # Step 12: Stop the preview server
       - name: Stop preview server
         if: always()
         run: kill $SERVER_PID || true

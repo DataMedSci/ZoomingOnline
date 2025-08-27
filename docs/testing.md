@@ -52,13 +52,13 @@ To run browser tests locally:
 2. Install Playwright browsers:
    ```bash
    cd app
-   npx playwright install
+   pnpm exec playwright install
    ```
 
 3. Run the browser tests:
    ```bash
    cd app
-   npm run test:browser
+   pnpm run test:browser
    ```
 
 This command automatically:
@@ -116,7 +116,7 @@ After running tests locally, you can view the HTML report:
 
 ```bash
 cd app
-npx playwright show-report
+pnpm exec playwright show-report
 ```
 
 In CI, test reports and screenshots are automatically uploaded as artifacts for easy access when tests fail.
@@ -128,7 +128,7 @@ For manual testing and development:
 1. Start the Svelte development server:
    ```bash
    cd app
-   npm run dev
+   pnpm run dev
    ```
 
 2. Navigate to http://localhost:5173/ in your browser

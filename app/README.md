@@ -146,15 +146,15 @@ pnpm run test:headed
 ```
 
 ```bash
-npx playwright test --headed
+pnpm exec playwright test --headed
 ```
 
 ```bash
-npx playwright test tests/browser.spec.js
+pnpm exec playwright test tests/browser.spec.js
 ```
 
 ```bash
-npx playwright test --debug
+pnpm exec playwright test --debug
 ```
 
 ### Test Structure
@@ -450,7 +450,7 @@ pnpm run build
 ### Development Metrics
 
 ```bash
-npx lighthouse-ci autorun
+pnpm exec lighthouse-ci autorun
 ```
 
 ```bash
