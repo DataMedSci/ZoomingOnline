@@ -18,14 +18,12 @@ test.describe("ZoomingOnline App Flow", () => {
   }) => {
     console.log("🚀 Starting complete app flow test");
 
-    // Step 1: Open main page
-    console.log("📍 Step 1: Opening main page");
+    console.log("📍 Opening main page");
     await page.goto("http://localhost:5173/");
     await expect(page).toHaveTitle(/ZoomingOnline/);
     console.log("✅ Main page loaded successfully");
 
-    // Step 2: Click "Copy Example URL"
-    console.log("📍 Step 2: Testing Copy Example URL");
+    console.log("📍 Testing Copy Example URL");
     const copyButton = page.locator('button:has-text("Copy Example URL")');
     await expect(copyButton).toBeVisible({ timeout: 10000 });
     await copyButton.click();
@@ -40,30 +38,26 @@ test.describe("ZoomingOnline App Flow", () => {
     expect(inputValue).toContain("example.zarr");
     console.log("✅ Example URL copied to input field:", inputValue);
 
-    // Step 3: Click "Load Data"
-    console.log("📍 Step 3: Loading data");
+    console.log("📍 Loading data");
     const loadButton = page.locator('button:has-text("Load Data")');
     await expect(loadButton).toBeVisible();
     await loadButton.click();
 
-    // Step 4: Check redirection to selection route
-    console.log("📍 Step 4: Checking redirection to selection");
+    console.log("📍 Checking redirection to selection");
     await expect(page).toHaveURL(/\/selection/, { timeout: 15000 });
     console.log("✅ Successfully redirected to selection page");
 
     // Wait for data to load
     await page.waitForTimeout(3000);
 
-    // Step 5: Check if dataset information is visible
-    console.log("📍 Step 5: Checking dataset information");
+    console.log("📍 Checking dataset information");
 
     // Look for dataset info container
     const datasetInfoSection = page.locator(".dataset-info");
     await expect(datasetInfoSection).toBeVisible({ timeout: 10000 });
     console.log("✅ Dataset information section is visible");
 
-    // Step 6: Check if dropdown options are populated
-    console.log("📍 Step 6: Checking dropdown population");
+    console.log("📍 Checking dropdown population");
 
     // Debug: Check what form elements are visible
     const selectionForm = page.locator("form").first();
@@ -97,7 +91,6 @@ test.describe("ZoomingOnline App Flow", () => {
         await page.waitForTimeout(5000);
       }
 
-      // Try again after waiting
       const selectCountAfterWait = await page.locator("select").count();
       console.log("🔍 Select elements after waiting:", selectCountAfterWait);
 
@@ -118,8 +111,7 @@ test.describe("ZoomingOnline App Flow", () => {
       }
     }
 
-    // Step 7: Look for channel selection dropdown
-    console.log("📍 Step 7: Looking for channel selection");
+    console.log("📍 Looking for channel selection");
 
     // Try multiple selectors for channel dropdown
     const channelSelect = page
@@ -130,14 +122,12 @@ test.describe("ZoomingOnline App Flow", () => {
     await expect(channelSelect).toBeVisible({ timeout: 5000 });
     console.log("✅ Channel selection dropdown found");
 
-    // Step 8: Select channel 2 (second item)
-    console.log("📍 Step 8: Selecting channel 2");
+    console.log("📍 Selecting channel 2");
     await channelSelect.selectOption({ index: 2 }); // Select third option (Channel 2, index starts from 0)
     const selectedChannelValue = await channelSelect.inputValue();
     console.log("✅ Channel 2 selected, value:", selectedChannelValue);
 
-    // Step 9: Look for TRC selection
-    console.log("📍 Step 9: Looking for TRC selection");
+    console.log("📍 Looking for TRC selection");
     const trcSelect = page
       .locator("#trc-select")
       .or(page.locator('select[id*="trc"]'))
@@ -148,8 +138,7 @@ test.describe("ZoomingOnline App Flow", () => {
     const selectedTrcValue = await trcSelect.inputValue();
     console.log("✅ TRC selected, value:", selectedTrcValue);
 
-    // Step 10: Select segment 2 (second item)
-    console.log("📍 Step 10: Selecting segment 2");
+    console.log("📍 Selecting segment 2");
     const segmentSelect = page
       .locator("#segment-select")
       .or(page.locator('select[id*="segment"]'))
@@ -160,8 +149,7 @@ test.describe("ZoomingOnline App Flow", () => {
     const selectedSegmentValue = await segmentSelect.inputValue();
     console.log("✅ Segment 2 selected, value:", selectedSegmentValue);
 
-    // Step 11: Click plot button
-    console.log("📍 Step 11: Clicking plot button");
+    console.log("📍 Clicking plot button");
 
     // Wait a moment for selections to propagate
     await page.waitForTimeout(1000);
@@ -199,21 +187,18 @@ test.describe("ZoomingOnline App Flow", () => {
     await plotButton.click();
     console.log("✅ Plot button clicked");
 
-    // Step 12: Wait for visualization page
-    console.log("📍 Step 12: Waiting for visualization page");
+    console.log("📍 Waiting for visualization page");
     await expect(page).toHaveURL(/\/visualization/, { timeout: 5000 });
     console.log("✅ Successfully navigated to visualization page");
 
-    // Step 13: Wait for chart to render
-    console.log("📍 Step 13: Waiting for chart to render");
+    console.log("📍 Waiting for chart to render");
     const chartContainer = page.locator(
       "#chart-container, .chart-container, svg",
     );
     await expect(chartContainer.first()).toBeVisible({ timeout: 5000 });
     console.log("✅ Chart rendered successfully");
 
-    // Step 14: Check if the correct default zoom level is selected
-    console.log("📍 Step 14: Checking default zoom level selection");
+    console.log("📍 Checking default zoom level selection");
 
     // Wait for zoom controls to be visible
     const zoomControls = page.locator(".zoom-controls");
@@ -257,16 +242,89 @@ test.describe("ZoomingOnline App Flow", () => {
       );
     }
 
-    // Step 15: Check if zoom rectangle is visible on the overview plot
-    console.log("📍 Step 15: Checking if zoom rectangle is displayed");
+    console.log("📍 Checking if zoom rectangle is displayed");
 
     // Look for zoom rectangle in the SVG
     const zoomRect = page.locator(".draggable-rect, rect.draggable-rect");
     await expect(zoomRect).toBeVisible({ timeout: 3000 });
     console.log("✅ Zoom rectangle is visible on the overview plot");
 
+    // Zoom rectangle interaction tests
+    console.log("📍 Testing zoom rectangle dragging");
+
+    // Get initial position of the zoom rectangle
+    const initialRect = await zoomRect.boundingBox();
+    console.log("🔍 Initial zoom rectangle position:", initialRect);
+
+    if (!initialRect) {
+      throw new Error("Zoom rectangle not found or has no bounding box");
+    }
+
+    // Calculate target position for dragging (move to 16us position)
+    // We'll move the rectangle horizontally by a significant amount
+    const dragDistance = 150; // pixels to drag horizontally
+    const targetX = initialRect.x + dragDistance;
+    const targetY = initialRect.y; // Keep same vertical position
+
+    console.log(`🔍 Dragging zoom rectangle from (${initialRect.x}, ${initialRect.y}) to (${targetX}, ${targetY})`);
+
+    // Perform slow drag operation (2 seconds duration)
+    await page.mouse.move(initialRect.x + initialRect.width / 2, initialRect.y + initialRect.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetX, targetY, { steps: 20 }); // 20 steps over ~2 seconds
+    await page.mouse.up();
+
+    console.log("✅ Zoom rectangle drag completed");
+
+    // Wait a moment for the chart to update
+    await page.waitForTimeout(1000);
+
+    // Check if rectangle position has changed
+    const finalRect = await zoomRect.boundingBox();
+    console.log("🔍 Final zoom rectangle position:", finalRect);
+
+    if (!finalRect) {
+      throw new Error("Zoom rectangle disappeared after dragging");
+    }
+
+    // Verify the rectangle has moved
+    const movedDistance = Math.abs(finalRect.x - initialRect.x);
+    expect(movedDistance).toBeGreaterThan(50); // Should have moved at least 50 pixels
+    console.log(`✅ Zoom rectangle moved ${movedDistance}px horizontally`);
+
+    // Test zoom rectangle width adjustment
+    console.log("📍 Testing zoom rectangle width adjustment");
+
+    // Look for zoom in/out buttons
+    const zoomInButton = page.locator("button").filter({ hasText: "In" });
+    await expect(zoomInButton).toBeVisible({ timeout: 3000 });
+
+    // Get rectangle width before zoom in
+    const widthBeforeZoom = finalRect.width;
+    console.log("🔍 Rectangle width before zoom in:", widthBeforeZoom);
+
+    // Click the "In" button to make rectangle narrower
+    await zoomInButton.click();
+    console.log("✅ Zoom In button clicked");
+
+    // Wait for the change to take effect
+    await page.waitForTimeout(1000);
+
+    // Check if rectangle width has changed
+    const rectAfterZoom = await zoomRect.boundingBox();
+    if (!rectAfterZoom) {
+      throw new Error("Zoom rectangle disappeared after zoom in");
+    }
+
+    const widthAfterZoom = rectAfterZoom.width;
+    console.log("🔍 Rectangle width after zoom in:", widthAfterZoom);
+
+    // Verify the rectangle became narrower (smaller width)
+    expect(widthAfterZoom).toBeLessThan(widthBeforeZoom);
+    console.log(`✅ Zoom rectangle width decreased from ${widthBeforeZoom}px to ${widthAfterZoom}px`);
+
     // Final verification
-    console.log("🎉 Complete app flow test passed!");
+    console.log("🎉 Complete app flow test with zoom rectangle interactions passed!");
   });
 
   test("error handling: invalid URL", async ({ page }) => {
