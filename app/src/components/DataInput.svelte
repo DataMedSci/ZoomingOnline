@@ -49,7 +49,7 @@
     </div>
     
     <div class="my-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-        <p class="m-0 font-medium mb-3">For testing, try the example dataset:</p>
+        <p class="m-0 font-medium mb-3">For testing, try these datasets:</p>
         <div class="flex gap-3 justify-center flex-wrap">
             <button 
                 class="btn-secondary btn-sm" 
@@ -66,6 +66,22 @@
                 title="Load example dataset directly"
             >
                 Load Example Data
+            </button>
+            <button 
+                class="btn-primary btn-sm" 
+                onclick={() => onload?.({ url: 'https://s3.cloud.cyfronet.pl/zooming-online/1nA/1nA.zarr' })}
+                disabled={isLoading}
+                title="Load 1nA dataset directly"
+            >
+                Load 1nA Data
+            </button>
+            <button 
+                class="btn-primary btn-sm" 
+                onclick={() => onload?.({ url: 'https://s3.cloud.cyfronet.pl/zooming-online/64nA/64nA.zarr' })}
+                disabled={isLoading}
+                title="Load 64nA dataset directly"
+            >
+                Load 64nA Data
             </button>
         </div>
     </div>
