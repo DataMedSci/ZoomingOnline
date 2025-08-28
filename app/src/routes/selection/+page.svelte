@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { base } from '$app/paths';
+    import { resolve } from '$app/paths';
+    import { page } from '$app/state';
     import { CircleAlert, CheckCircle } from '@lucide/svelte';
     import { 
         appState, 
@@ -11,6 +12,7 @@
         dataState,
         uiState
     } from '../../stores/appState';
+    import { loadZarrData } from '../../services/dataService';
     import ShareButton from '../../components/ShareButton.svelte';
     import DatasetInfo from '../../components/DatasetInfo.svelte';
     import SelectionForm from '../../components/SelectionForm.svelte';
@@ -19,6 +21,7 @@
     // Local component state using Svelte 5 runes
     let hasInitialized = $state(false);
     let datasetInfo = $state(null);
+    let isAutoLoading = $state(false);
 
     // Global store access using derived runes
     const state = $derived($appState);
@@ -28,15 +31,30 @@
     const loading = $derived($uiState.isLoading);
     const error = $derived($uiState.error);
 
+    // Get data URL from query parameters
+    const dataUrlParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('data');
+    });
+
     // Selection values for the form (convert from indices) using derived runes
     const selectedChannel = $derived(`${state.selection.channelIndex + 1}`);
     const selectedTrc = $derived(`${state.selection.trcIndex + 1}`);
     const selectedSegment = $derived(`${state.selection.segmentIndex + 1}`);
 
+    // Auto-load data from URL parameter
+    $effect(() => {
+        const url = dataUrlParam();
+        if (url && !dataReady && !isAutoLoading && !loading) {
+            isAutoLoading = true;
+            loadDataFromUrl(url);
+        }
+    });
+
     // Initialize and check data readiness using runes effect
     $effect(() => {
         if (!dataReady && hasInitialized) {
-            goto(`${base}/`);
+            goto(resolve('/'));
             return;
         }
         
@@ -128,7 +146,16 @@
     // Handle plot navigation
     async function handlePlot() {
         if (plotReady) {
-            await goto(`${base}/visualization`);
+            // Preserve data parameter when navigating to visualization
+            const currentUrl = new URL(page.url);
+            const dataParam = currentUrl.searchParams.get('data');
+
+            let visualizationUrl = `${resolve('/visualization')}`;
+            if (dataParam) {
+                visualizationUrl += `?data=${encodeURIComponent(dataParam)}`;
+            }
+            
+            await goto(visualizationUrl);
         } else {
             actions.setError('Data not ready for plotting');
         }
@@ -137,7 +164,24 @@
     // Handle loading different dataset
     async function handleLoadDifferentDataset() {
         actions.resetData();
-        await goto(`${base}/`);
+        await goto(`${resolve('/')}`);
+    }
+
+    // Auto-load data from URL parameter
+    async function loadDataFromUrl(url: string) {
+        try {
+            actions.setLoading(true);
+            await loadZarrData(url);
+            actions.setData({ url, isLoaded: true });
+            actions.setUI({ showCopyLink: true });
+            actions.setError('');
+        } catch (err: unknown) {
+            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            actions.setError(errorMsg);
+        } finally {
+            actions.setLoading(false);
+            isAutoLoading = false;
+        }
     }
 </script>
 

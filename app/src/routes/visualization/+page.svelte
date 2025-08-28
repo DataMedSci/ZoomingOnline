@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { base } from '$app/paths';
+    import { resolve } from '$app/paths';
+    import { page } from '$app/state';
     import { 
         isDataReadyForPlot,
         selectedChannelIndex,
@@ -38,7 +39,16 @@
     $effect(() => {
         // Guard: if visualization isn't ready (no selections/data), navigate back to selection
         if (!plotReady && !loading && dataLoaded && hasInitialized) {
-            goto(`${base}/selection`);
+            // Preserve data parameter from current URL when redirecting back to selection
+            const currentUrl = new URL(page.url);
+            const dataParam = currentUrl.searchParams.get('data');
+
+            let selectionUrl = `${resolve('/selection')}`;
+            if (dataParam) {
+                selectionUrl += `?data=${encodeURIComponent(dataParam)}`;
+            }
+            
+            goto(selectionUrl);
             return;
         }
 
@@ -48,7 +58,16 @@
     });
 
     function handleGoBack() {
-        goto(`${base}/selection`);
+        // Preserve data parameter from current URL when going back to selection
+        const currentUrl = new URL(page.url);
+        const dataParam = currentUrl.searchParams.get('data');
+
+        let selectionUrl = `${resolve('/selection')}`;
+        if (dataParam) {
+            selectionUrl += `?data=${encodeURIComponent(dataParam)}`;
+        }
+        
+        goto(selectionUrl);
     }
 </script>
 

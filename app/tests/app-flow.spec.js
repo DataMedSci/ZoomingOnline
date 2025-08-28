@@ -20,7 +20,7 @@ test.describe("ZoomingOnline App Flow", () => {
 
     // Step 1: Open main page
     console.log("📍 Step 1: Opening main page");
-    await page.goto("/");
+    await page.goto("http://localhost:5173/");
     await expect(page).toHaveTitle(/ZoomingOnline/);
     console.log("✅ Main page loaded successfully");
 

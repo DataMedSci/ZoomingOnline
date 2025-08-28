@@ -5,7 +5,6 @@
         uiState
     } from '../../stores/appState';
     import { initializePlotData } from '../../renderers/chartRenderer';
-    // import ChartOverview from './ChartOverview.svelte'; // Disabled - replaced with ChartSvelteD3Test
     import ChartSvelteD3Test from './ChartSvelteD3Test.svelte';
     import ChartLoadingStates from './ChartLoadingStates.svelte';
     import ChartZoomControls from './ChartZoomControls.svelte';
@@ -133,16 +132,6 @@
                             timeBetweenPoints={plotData.horiz_interval}
                             {zoomLevel}
                         />
-                        <!--
-                        <ChartOverview
-                            data={plotData.overviewData || []}
-                            totalTime={plotData.total_time_s}
-                            totalSamples={plotData.no_of_samples}
-                            globalYMin={plotData.globalYMin ?? 0}
-                            globalYMax={plotData.globalYMax ?? 1}
-                            {zoomLevel}
-                        />
-                        -->
                     {/if}
                 </div>
             </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { base } from '$app/paths';
+    import { resolve } from '$app/paths';
     import { browser } from '$app/environment';
     import { 
         isLoading, 
@@ -37,8 +37,9 @@
             actions.setUI({ showCopyLink: true });
             actions.setError('');
             
-            // Navigate to selection
-            goto(`${base}/selection`);
+            // Navigate to selection with data URL as query parameter
+            const dataParam = encodeURIComponent(url);
+            goto(`${resolve('/selection')}?data=${dataParam}`);
             
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : 'Unknown error';
