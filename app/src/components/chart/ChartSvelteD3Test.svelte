@@ -132,21 +132,44 @@
         });
         resizeObserver.observe(containerElement);
 
-        // D3 drag setup
+        return () => {
+            resizeObserver.disconnect();
+            clearTimeout(resizeTimeout);
+        };
+    });
+
+    // Drag behavior setup - reactive to zoomLevel changes
+    $effect(() => {
+        if (!svgElement) return;
+
         const rect = d3.select(svgElement).select<SVGRectElement>('.draggable-rect');
-        if (!rect.empty()) {
+
+        // Only setup drag behavior if rectangle exists and zoomLevel is not null
+        if (!rect.empty() && zoomLevel !== null) {
+            console.log('Setting up drag behavior for rectangle');
+
+            // Clean up any existing drag behavior first
+            rect.on('.drag', null);
+
             const dragBehavior = d3.drag<SVGRectElement, unknown>()
                 .on('start', handleRectangleDragStart)
                 .on('drag', handleRectangleDrag)
                 .on('end', handleRectangleDragEnd);
+
             rect.call(dragBehavior);
+
+            // Cleanup function for when effect re-runs
+            return () => {
+                console.log('Cleaning up drag behavior for rectangle');
+                rect.on('.drag', null);
+            };
+        } else if (zoomLevel === null) {
+            // Clean up drag behavior when zoomLevel becomes null
+            rect.on('.drag', null);
         }
 
-        return () => {
-            resizeObserver.disconnect();
-            clearTimeout(resizeTimeout);
-            rect.on('.drag', null);
-        };
+        // No cleanup needed for other cases
+        return;
     });
 
     // Axis rendering effect
@@ -186,12 +209,13 @@
     });
 </script>
 
-<div bind:this={containerElement} class="chart-container">
-    <div class="svg-wrapper">
+<div bind:this={containerElement} class="w-full h-full max-h-[600px] min-h-[300px] flex flex-col p-4 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+    <div class="flex-1 min-h-[250px] max-h-[500px] w-full relative overflow-hidden">
         <svg
             bind:this={svgElement}
             viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
             preserveAspectRatio="xMinYMin meet"
+            class="w-full h-full block"
         >
             <!-- X Axis -->
             <g class="x-axis" transform={`translate(0,${dimensions.height - MARGIN.bottom})`} />
@@ -233,36 +257,6 @@
 </div>
 
 <style>
-    .chart-container {
-        width: 100%;
-        height: 100%;
-        max-height: 600px;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        padding: 1rem;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    .svg-wrapper {
-        flex: 1;
-        min-height: 250px;
-        max-height: 500px;
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-    }
-
-    svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-    }
-
     /* Axis styling */
     :global(.x-axis text),
     :global(.y-axis text) {
