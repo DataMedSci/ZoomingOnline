@@ -142,7 +142,7 @@
     $effect(() => {
         if (!svgElement) return;
 
-        const rect = d3.select(svgElement).select<SVGRectElement>('.draggable-rect');
+        const rect = d3.select(svgElement).select<SVGRectElement>('.zoom-rect');
 
         // Only setup drag behavior if rectangle exists and zoomLevel is not null
         if (!rect.empty() && zoomLevel !== null) {
@@ -237,10 +237,10 @@
                 Voltage (mV)
             </text>
 
-            <!-- Draggable rectangle -->
+            <!-- Zoom rectangle -->
             {#if zoomLevel !== null}
                 <rect
-                    class="draggable-rect"
+                    class="zoom-rect"
                     x={rectangleMetrics.left}
                     y={rectangleMetrics.top}
                     width={rectangleMetrics.width}
@@ -272,7 +272,7 @@
     }
 
     /* Rectangle transitions */
-    .draggable-rect {
+    .zoom-rect {
         transition: stroke 0.2s ease, stroke-width 0.2s ease;
     }
 </style>
