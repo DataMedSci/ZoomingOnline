@@ -1,0 +1,229 @@
+<script lang="ts">
+    import { createEventDispatcher } from 'svelte';
+    import { generateZoomLevelsWithLabels } from '../../utils/zoomLevels';
+
+    // Props using Svelte 5 runes syntax
+    interface ZoomControlsProps {
+        timeBetweenPoints: number;
+        segmentDuration: number;
+        totalSamples: number;
+        currentZoomLevel: number | null;
+        levelId: string; // Identifier for this zoom level (e.g., 'overview', 'zoom1', 'zoom2')
+        title?: string;
+    }
+
+    let {
+        timeBetweenPoints,
+        segmentDuration,
+        totalSamples,
+        currentZoomLevel,
+        levelId,
+        title = "Zoom Level"
+    }: ZoomControlsProps = $props();
+
+    // Event dispatcher
+    const dispatch = createEventDispatcher();
+
+    // State using $state rune
+    let selectedZoomLevel = $state(currentZoomLevel);
+    let defaultSet = $state(false);
+
+    // Generate zoom levels dynamically based on data characteristics
+    const zoomLevels = $derived(
+        timeBetweenPoints && segmentDuration
+            ? generateZoomLevelsWithLabels(timeBetweenPoints, segmentDuration)
+            : []
+    );
+
+    // Set default zoom level when zoom levels are available
+    $effect(() => {
+        if (zoomLevels.length > 0 && !defaultSet) {
+            let defaultLevel;
+
+            // Select third item from the bottom (end) as the default
+            let defaultIndex;
+
+            if (zoomLevels.length <= 2) {
+                defaultIndex = 0;
+            } else {
+                // Select third item from the bottom
+                defaultIndex = zoomLevels.length - 3;
+            }
+
+            defaultLevel = zoomLevels[defaultIndex];
+
+            if (defaultLevel) {
+                selectedZoomLevel = defaultLevel.value;
+                defaultSet = true;
+
+                // Dispatch the initial zoom level
+                dispatch('zoomLevelChange', {
+                    zoomLevel: selectedZoomLevel,
+                    levelId,
+                    position: Math.floor(totalSamples / 2)
+                });
+            }
+        }
+    });
+
+    // Update selectedZoomLevel when currentZoomLevel prop changes
+    $effect(() => {
+        if (currentZoomLevel !== null && currentZoomLevel !== selectedZoomLevel) {
+            selectedZoomLevel = currentZoomLevel;
+        }
+    });
+
+    // Derived state for button states
+    const currentZoomIndex = $derived(
+        selectedZoomLevel !== undefined
+            ? zoomLevels.findIndex(level => level.value === selectedZoomLevel)
+            : -1
+    );
+    const canZoomIn = $derived(currentZoomIndex > 0);
+    const canZoomOut = $derived(currentZoomIndex >= 0 && currentZoomIndex < zoomLevels.length - 1);
+
+    // Functions
+    function handleZoomIn() {
+        if (zoomLevels.length === 0) return;
+
+        // Find current index in the zoom levels array
+        const currentIndex = selectedZoomLevel !== undefined
+            ? zoomLevels.findIndex(level => level.value === selectedZoomLevel)
+            : -1;
+
+        // Move to a smaller zoom level (earlier in the array, more zoomed in)
+        const newIndex = Math.max(0, currentIndex - 1);
+        const newZoomLevel = zoomLevels[newIndex]?.value;
+
+        if (newZoomLevel !== undefined) {
+            selectedZoomLevel = newZoomLevel;
+            dispatch('zoomLevelChange', {
+                zoomLevel: newZoomLevel,
+                levelId,
+                position: 0
+            });
+        }
+    }
+
+    function handleZoomOut() {
+        if (zoomLevels.length === 0) return;
+
+        // Find current index in the zoom levels array
+        const currentIndex = selectedZoomLevel !== undefined
+            ? zoomLevels.findIndex(level => level.value === selectedZoomLevel)
+            : -1;
+
+        // Move to a larger zoom level (later in the array, more zoomed out)
+        const newIndex = Math.min(zoomLevels.length - 1, currentIndex + 1);
+        const newZoomLevel = zoomLevels[newIndex]?.value;
+
+        if (newZoomLevel !== undefined) {
+            selectedZoomLevel = newZoomLevel;
+            dispatch('zoomLevelChange', {
+                zoomLevel: newZoomLevel,
+                levelId,
+                position: 0
+            });
+        }
+    }
+
+    function handleDefaults() {
+        // Reset to default zoom level and position
+        if (zoomLevels.length > 0) {
+            let defaultLevel;
+            let defaultIndex;
+
+            if (zoomLevels.length <= 2) {
+                defaultIndex = 0;
+            } else {
+                // Select third item from the bottom
+                defaultIndex = zoomLevels.length - 3;
+            }
+
+            defaultLevel = zoomLevels[defaultIndex];
+
+            if (defaultLevel) {
+                selectedZoomLevel = defaultLevel.value;
+                defaultSet = true;
+
+                // Dispatch with default position (center of data)
+                dispatch('zoomLevelChange', {
+                    zoomLevel: selectedZoomLevel,
+                    levelId,
+                    position: Math.floor(totalSamples / 2)
+                });
+            }
+        }
+    }
+
+    function handleDropdownChange(event: Event) {
+        const target = event.target as HTMLSelectElement;
+        const newLevel = parseFloat(target.value);
+        selectedZoomLevel = newLevel;
+        dispatch('zoomLevelChange', {
+            zoomLevel: newLevel,
+            levelId,
+            position: 0
+        });
+    }
+</script>
+
+<div class="zoom-controls bg-white p-3 rounded-lg shadow-md min-w-[200px] max-w-[240px]">
+    <h3 class="text-lg font-semibold text-gray-800 m-0 mb-4">{title}</h3>
+
+    <!-- Zoom Level -->
+    <div class="mb-6">
+        <div class="flex gap-2 mb-4">
+            <button
+                onclick={handleZoomIn}
+                title="Zoom In"
+                disabled={!canZoomIn}
+                class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer {canZoomIn ? 'bg-emerald-500 hover:bg-emerald-600 hover:-translate-y-0.5' : 'bg-gray-400 cursor-not-allowed'}"
+            >
+                ➕ In
+            </button>
+            <button
+                onclick={handleDefaults}
+                title="Reset to defaults"
+                class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer bg-blue-500 hover:bg-blue-600 hover:-translate-y-0.5"
+            >
+                🎯 Defaults
+            </button>
+            <button
+                onclick={handleZoomOut}
+                title="Zoom Out"
+                disabled={!canZoomOut}
+                class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer {canZoomOut ? 'bg-amber-500 hover:bg-amber-600 hover:-translate-y-0.5' : 'bg-gray-400 cursor-not-allowed'}"
+            >
+                ➖ Out
+            </button>
+        </div>
+
+        <div class="mb-2">
+            <select
+                id="zoomSelect-{levelId}"
+                bind:value={selectedZoomLevel}
+                onchange={handleDropdownChange}
+                class="w-full border border-gray-300 rounded-lg p-2 text-sm bg-white cursor-pointer transition-colors focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+                {#each zoomLevels as level}
+                    <option value={level.value}>
+                        {level.label}
+                    </option>
+                {/each}
+            </select>
+        </div>
+
+        {#if selectedZoomLevel}
+            <div class="p-2 bg-blue-50 text-blue-800 rounded-md text-xs text-center">
+                Current: {zoomLevels.find(l => l.value === selectedZoomLevel)?.label || 'Custom'}
+            </div>
+        {/if}
+    </div>
+
+    {#if zoomLevels.length === 0}
+        <div class="text-xs text-gray-600 text-center mt-4">
+            No zoom levels available
+        </div>
+    {/if}
+</div>

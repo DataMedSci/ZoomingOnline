@@ -5,12 +5,14 @@
     import ChartRectangle from './ChartRectangle.svelte';
 
     // Props using Svelte 5 $props()
-    interface ChartProps {
+    interface Zoom1ChartProps {
         data: OverviewDataPoint[];
         totalTime: number;
         globalYMin: number;
         globalYMax: number;
-        zoomLevel?: number | null;
+        zoomLevel: number | null;
+        rectanglePosition: number; // Position from overview chart rectangle (0-1 normalized)
+        rectangleWidth: number; // Width from overview chart rectangle (0-1 normalized)
         onRectangleChange?: (position: number) => void;
     }
 
@@ -19,9 +21,11 @@
         totalTime,
         globalYMin,
         globalYMax,
-        zoomLevel = null,
+        zoomLevel,
+        rectanglePosition,
+        rectangleWidth,
         onRectangleChange
-    }: ChartProps = $props();
+    }: Zoom1ChartProps = $props();
 
     // DOM references
     let svgElement: SVGSVGElement;
@@ -33,23 +37,16 @@
         height: 400
     });
 
+    // Rectangle state for this chart's own rectangle
+    let localRectanglePosition = $state(0.5); // Center position (0-1 normalized)
+
     // Constants
     const MARGIN = { top: 10, right: 10, bottom: 35, left: 80 } as const;
     const MIN_WIDTH = 400;
     const MAX_WIDTH = 1200;
     const MIN_HEIGHT = 300;
     const MAX_HEIGHT = 500;
-    const DEFAULT_RECT_WIDTH = 80;
     const RESIZE_THROTTLE_MS = 100;
-
-    // Rectangle state
-    let rectangleState = $state({
-        centerX: null as number | null,
-        isDragging: false
-    });
-
-    // Rectangle position (normalized 0-1)
-    let rectanglePosition = $state<number>(0.5); // Center
 
     // Derived values
     const chartDimensions = $derived({
@@ -57,11 +54,31 @@
         innerHeight: dimensions.height - MARGIN.top - MARGIN.bottom
     });
 
-    const xScale = $derived(
-        d3.scaleLinear()
-            .domain([0, totalTime])
-            .range([MARGIN.left, dimensions.width - MARGIN.right])
-    );
+    // Calculate the subset of data to show based on rectangle position from overview
+    const visibleDataRange = $derived(() => {
+        const startTime = rectanglePosition * totalTime - (rectangleWidth * totalTime) / 2;
+        const endTime = rectanglePosition * totalTime + (rectangleWidth * totalTime) / 2;
+        return {
+            startTime: Math.max(0, startTime),
+            endTime: Math.min(totalTime, endTime)
+        };
+    });
+
+    const filteredData = $derived(() => {
+        if (!data) return [];
+        const range = visibleDataRange();
+        return data.filter(point =>
+            point.time_s >= range.startTime &&
+            point.time_s <= range.endTime
+        );
+    });
+
+    const xScale = $derived(() => {
+        const range = visibleDataRange();
+        return d3.scaleLinear()
+            .domain([range.startTime, range.endTime])
+            .range([MARGIN.left, dimensions.width - MARGIN.right]);
+    });
 
     const yScale = $derived(
         d3.scaleLinear()
@@ -69,32 +86,47 @@
             .range([dimensions.height - MARGIN.bottom, MARGIN.top])
     );
 
-    const pxPerSecond = $derived(chartDimensions.innerWidth / totalTime);
-
-    const rectangleMetrics = $derived({
-        width: zoomLevel ? zoomLevel * pxPerSecond : DEFAULT_RECT_WIDTH,
-        height: chartDimensions.innerHeight,
-        top: MARGIN.top,
-        centerX: rectangleState.centerX ?? xScale(totalTime * rectanglePosition),
-        get left() {
-            return this.centerX - this.width / 2;
-        }
+    const pxPerSecond = $derived(() => {
+        const range = visibleDataRange();
+        return chartDimensions.innerWidth / (range.endTime - range.startTime);
     });
 
-    const chartPaths = $derived({
-        area: d3.area<OverviewDataPoint>()
-            .x(d => xScale(d.time_s))
-            .y0(d => yScale(d.min_mv))
-            .y1(d => yScale(d.max_mv)),
+    // Rectangle metrics for this chart's rectangle
+    const localRectangleMetrics = $derived(() => {
+        const rectWidth = zoomLevel ? zoomLevel * pxPerSecond() : 80;
+        const rectHeight = chartDimensions.innerHeight;
+        const centerX = MARGIN.left + (localRectanglePosition * chartDimensions.innerWidth);
 
-        line: d3.line<OverviewDataPoint>()
-            .x(d => xScale(d.time_s))
-            .y(d => yScale((d.min_mv + d.max_mv) / 2))
+        return {
+            width: rectWidth,
+            height: rectHeight,
+            centerX,
+            top: MARGIN.top,
+            left: centerX - rectWidth / 2
+        };
     });
 
-    const pathData = $derived({
-        area: data ? chartPaths.area(data) : '',
-        line: data ? chartPaths.line(data) : ''
+    const chartPaths = $derived(() => {
+        const scale = xScale();
+        return {
+            area: d3.area<OverviewDataPoint>()
+                .x(d => scale(d.time_s))
+                .y0(d => yScale(d.min_mv))
+                .y1(d => yScale(d.max_mv)),
+
+            line: d3.line<OverviewDataPoint>()
+                .x(d => scale(d.time_s))
+                .y(d => yScale((d.min_mv + d.max_mv) / 2))
+        };
+    });
+
+    const pathData = $derived(() => {
+        const paths = chartPaths();
+        const data = filteredData();
+        return {
+            area: data && data.length > 0 ? paths.area(data) : '',
+            line: data && data.length > 0 ? paths.line(data) : ''
+        };
     });
 
     // Functions
@@ -108,12 +140,12 @@
         dimensions.height = Math.max(MIN_HEIGHT, Math.min(parentRect.height - 40, MAX_HEIGHT));
     }
 
-    function handleRectangleDragStart(): void {
-        rectangleState.isDragging = true;
-    }
-
-    function handleRectangleDragEnd(): void {
-        rectangleState.isDragging = false;
+    function handleLocalRectangleDrag(deltaX: number): void {
+        const metrics = localRectangleMetrics();
+        const newCenterX = metrics.centerX + deltaX;
+        const newPosition = (newCenterX - MARGIN.left) / chartDimensions.innerWidth;
+        localRectanglePosition = Math.max(0, Math.min(1, newPosition));
+        onRectangleChange?.(localRectanglePosition);
     }
 
     // Lifecycle
@@ -134,14 +166,6 @@
         };
     });
 
-    // Drag behavior setup - reactive to zoomLevel changes
-    $effect(() => {
-        if (!svgElement) return;
-
-        // No drag setup needed - ChartRectangle component handles this
-        return;
-    });
-
     // Axis rendering effect
     $effect(() => {
         if (!svgElement) return;
@@ -149,7 +173,7 @@
         const svg = d3.select(svgElement);
 
         // Create X axis with grid lines
-        const xAxis = d3.axisBottom(xScale)
+        const xAxis = d3.axisBottom(xScale())
             .tickSize(-chartDimensions.innerHeight)
             .tickFormat(d => `${d3.format("~s")(d)}s`);
 
@@ -194,9 +218,9 @@
             <g class="y-axis" transform={`translate(${MARGIN.left},0)`} />
 
             <!-- Data visualization -->
-            {#if data && data.length > 0}
-                <path d={pathData.area} class="fill-blue-500 opacity-30" />
-                <path d={pathData.line} class="fill-none stroke-blue-500 stroke-2" />
+            {#if filteredData() && filteredData().length > 0}
+                <path d={pathData().area} class="fill-blue-500 opacity-30" />
+                <path d={pathData().line} class="fill-none stroke-blue-500 stroke-2" />
             {/if}
 
             <!-- Axis labels -->
@@ -207,32 +231,19 @@
                 Voltage (mV)
             </text>
 
-            <!-- Zoom rectangle -->
-            {#if zoomLevel !== null}
-                <ChartRectangle
-                    width={rectangleMetrics.width}
-                    height={rectangleMetrics.height}
-                    centerX={rectangleMetrics.centerX}
-                    top={rectangleMetrics.top}
-                    isEnabled={true}
-                    dragConstraints={{
-                        minX: MARGIN.left,
-                        maxX: dimensions.width - MARGIN.right
-                    }}
-                    onDragStart={handleRectangleDragStart}
-                    onDrag={(deltaX) => {
-                        const newCenterX = rectangleMetrics.centerX + deltaX;
-                        const minX = MARGIN.left + rectangleMetrics.width / 2;
-                        const maxX = dimensions.width - MARGIN.right - rectangleMetrics.width / 2;
-                        rectangleState.centerX = Math.max(minX, Math.min(newCenterX, maxX));
-
-                        const newPosition = (rectangleState.centerX - MARGIN.left) / chartDimensions.innerWidth;
-                        rectanglePosition = Math.max(0, Math.min(1, newPosition));
-                        onRectangleChange?.(rectanglePosition);
-                    }}
-                    onDragEnd={handleRectangleDragEnd}
-                />
-            {/if}
+            <!-- Local zoom rectangle -->
+            <ChartRectangle
+                width={localRectangleMetrics().width}
+                height={localRectangleMetrics().height}
+                centerX={localRectangleMetrics().centerX}
+                top={localRectangleMetrics().top}
+                isEnabled={zoomLevel !== null}
+                dragConstraints={{
+                    minX: MARGIN.left,
+                    maxX: dimensions.width - MARGIN.right
+                }}
+                onDrag={(deltaX) => handleLocalRectangleDrag(deltaX)}
+            />
         </svg>
     </div>
 </div>
