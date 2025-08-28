@@ -5,7 +5,8 @@
         uiState
     } from '../../stores/appState';
     import { initializePlotData } from '../../renderers/chartRenderer';
-    import ChartOverview from './ChartOverview.svelte';
+    // import ChartOverview from './ChartOverview.svelte'; // Disabled - replaced with ChartSvelteD3Test
+    import ChartSvelteD3Test from './ChartSvelteD3Test.svelte';
     import ChartLoadingStates from './ChartLoadingStates.svelte';
     import ChartZoomControls from './ChartZoomControls.svelte';
     import type { PlotDataResult } from '../../renderers/chartRenderer';
@@ -100,6 +101,15 @@
     }
 </script>
 
+<style>
+    .chart-wrapper {
+        height: 500px; /* Fixed height to prevent infinite growth */
+        max-height: 600px;
+        min-height: 400px;
+        overflow: hidden; /* Ensure content doesn't overflow */
+    }
+</style>
+
 <!-- Chart container -->
 <ChartLoadingStates isLoading={$uiState.isLoading} error={$uiState.error || chartError} />
 
@@ -109,11 +119,21 @@
         <div class="flex-1 bg-white rounded-lg shadow-md overflow-hidden">
             <div class="p-4">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Visualization</h3>
-                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 chart-wrapper">
                     {#if !isInitialized || !plotData}
                         <ChartLoadingStates showInitializing={true} />
                     {:else}
-                        <!-- Overview Chart -->
+                        <!-- Svelte D3 Test Chart -->
+                        <ChartSvelteD3Test
+                            data={plotData.overviewData || []}
+                            totalTime={plotData.total_time_s}
+                            totalSamples={plotData.no_of_samples}
+                            globalYMin={plotData.globalYMin ?? 0}
+                            globalYMax={plotData.globalYMax ?? 1}
+                            timeBetweenPoints={plotData.horiz_interval}
+                            {zoomLevel}
+                        />
+                        <!--
                         <ChartOverview
                             data={plotData.overviewData || []}
                             totalTime={plotData.total_time_s}
@@ -122,6 +142,7 @@
                             globalYMax={plotData.globalYMax ?? 1}
                             {zoomLevel}
                         />
+                        -->
                     {/if}
                 </div>
             </div>
