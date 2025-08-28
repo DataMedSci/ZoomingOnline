@@ -225,15 +225,15 @@
 
             <!-- Data visualization -->
             {#if data && data.length > 0}
-                <path d={pathData.area} fill="steelblue" fill-opacity="0.3" />
-                <path d={pathData.line} fill="none" stroke="steelblue" stroke-width="2" />
+                <path d={pathData.area} class="fill-blue-500 opacity-30" />
+                <path d={pathData.line} class="fill-none stroke-blue-500 stroke-2" />
             {/if}
 
             <!-- Axis labels -->
-            <text x={dimensions.width / 2} y={dimensions.height - 5} text-anchor="middle" font-size="14px">
+            <text x={dimensions.width / 2} y={dimensions.height - 5} text-anchor="middle" class="text-[14px] fill-current">
                 Time (s)
             </text>
-            <text x={-(dimensions.height / 2)} y={15} transform="rotate(-90)" text-anchor="middle" font-size="14px">
+            <text x={-(dimensions.height / 2)} y={15} transform="rotate(-90)" text-anchor="middle" class="text-[14px] fill-current">
                 Voltage (mV)
             </text>
 
@@ -257,7 +257,7 @@
 </div>
 
 <style>
-    /* Axis styling */
+    /* Axis styling - D3 generated elements need CSS specificity */
     :global(.x-axis text),
     :global(.y-axis text) {
         font-size: clamp(11px, 2vw, 14px);
