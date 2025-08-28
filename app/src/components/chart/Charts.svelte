@@ -5,7 +5,7 @@
         uiState
     } from '../../stores/appState';
     import { initializePlotData } from '../../renderers/chartRenderer';
-    import ChartSvelteD3Test from './ChartSvelteD3Test.svelte';
+    import OverviewChart from './OverviewChart.svelte';
     import ChartLoadingStates from './ChartLoadingStates.svelte';
     import ChartZoomControls from './ChartZoomControls.svelte';
     import type { PlotDataResult } from '../../renderers/chartRenderer';
@@ -48,7 +48,6 @@
         if (isInitialized) return;
         
         try {
-            console.log('Initializing chart with current selection');
             isInitialized = true;
             chartError = null;
             
@@ -61,18 +60,6 @@
                 state.selection.segmentIndex!
             );
             plotData = result;
-            
-            console.log('Chart initialized successfully', JSON.stringify({
-                horiz_interval: plotData.horiz_interval,
-                no_of_samples: plotData.no_of_samples,
-                total_time_s: plotData.total_time_s,
-                channel: plotData.channel,
-                trc: plotData.trc,
-                segment: plotData.segment,
-                globalYMin: plotData.globalYMin,
-                globalYMax: plotData.globalYMax,
-                overviewDataLength: plotData.overviewData?.length
-            }, null, 2));
         } catch (error) {
             console.error('Chart initialization failed:', error);
             chartError = error instanceof Error ? error.message : 'Unknown initialization error';
@@ -84,16 +71,13 @@
     function handleZoomLevelChange(event: CustomEvent<{ zoomLevel: number; position: number }>): void {
         const { zoomLevel: newLevel } = event.detail;
         zoomLevel = newLevel;
-        console.log(`Zoom changed to level ${newLevel}`);
     }
 
     function handleZoomReset(): void {
         zoomLevel = null;
-        console.log('Zoom reset to overview');
     }
 
     function handleReloadData(): void {
-        console.log('Reloading chart data');
         plotData = null;
         isInitialized = false;
         chartError = null;
@@ -122,8 +106,8 @@
                     {#if !isInitialized || !plotData}
                         <ChartLoadingStates showInitializing={true} />
                     {:else}
-                        <!-- Svelte D3 Test Chart -->
-                        <ChartSvelteD3Test
+                        <!-- Overview Chart -->
+                        <OverviewChart
                             data={plotData.overviewData || []}
                             totalTime={plotData.total_time_s}
                             totalSamples={plotData.no_of_samples}

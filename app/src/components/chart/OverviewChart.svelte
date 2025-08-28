@@ -103,12 +103,10 @@
     }
 
     function handleRectangleDragStart(): void {
-        console.log('Rectangle drag started');
         rectangleState.isDragging = true;
     }
 
     function handleRectangleDrag(event: d3.D3DragEvent<SVGRectElement, unknown, unknown>): void {
-        console.log('Rectangle dragging', event.dx, event.dy);
         const newCenterX = (rectangleState.centerX ?? rectangleMetrics.centerX) + event.dx;
 
         const minX = MARGIN.left + rectangleMetrics.width / 2;
@@ -118,13 +116,11 @@
     }
 
     function handleRectangleDragEnd(): void {
-        console.log('Rectangle drag ended');
         rectangleState.isDragging = false;
     }
 
     // Lifecycle
     onMount(() => {
-        console.log('Chart component mounted');
         updateDimensions();
 
         // Resize observer
@@ -143,23 +139,14 @@
 
     // Drag behavior setup - reactive to zoomLevel changes
     $effect(() => {
-        if (!svgElement){
-            console.log('SVG element not found');
-            return;
-        }
-
-        console.log('Setting up drag behavior effect, zoomLevel:', zoomLevel);
+        if (!svgElement) return;
 
         const rect = d3.select(svgElement).select<SVGRectElement>('.draggable-rect');
 
         // Only setup drag behavior if rectangle exists and zoomLevel is not null
         if (!rect.empty() && zoomLevel !== null) {
-            console.log('Setting up drag behavior for rectangle');
-
             // Clean up any existing drag behavior first
             rect.on('.drag', null);
-
-            console.log('Attaching new drag behavior');
 
             const dragBehavior = d3.drag<SVGRectElement, unknown>()
                 .on('start', handleRectangleDragStart)
@@ -170,12 +157,10 @@
 
             // Cleanup function for when effect re-runs
             return () => {
-                console.log('Cleaning up drag behavior for rectangle');
                 rect.on('.drag', null);
             };
         } else if (zoomLevel === null) {
             // Clean up drag behavior when zoomLevel becomes null
-            console.log('Removing drag behavior as zoomLevel is null');
             rect.on('.drag', null);
         }
 

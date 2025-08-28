@@ -57,8 +57,6 @@
 
     // Functions
     function handleZoomIn() {
-        console.log('Zoom In clicked');
-        
         if (zoomLevels.length === 0) return;
         
         // Find current index in the zoom levels array
@@ -78,8 +76,6 @@
     }
 
     function handleZoomOut() {
-        console.log('Zoom Out clicked');
-        
         if (zoomLevels.length === 0) return;
         
         // Find current index in the zoom levels array
@@ -100,7 +96,6 @@
 
     // Functions
     function handleDefaults() {
-        console.log('Defaults clicked');
         // Reset to default zoom level and position
         if (zoomLevels.length > 0) {
             let defaultLevel;

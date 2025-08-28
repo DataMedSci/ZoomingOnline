@@ -74,7 +74,6 @@
     async function calculateDatasetInfo() {
         try {
             if (!$dataState.rawStore?.shape || !$dataState.zarrGroup) {
-                console.log('calculateDatasetInfo: Missing rawStore shape or zarrGroup');
                 return;
             }
             
@@ -87,7 +86,6 @@
             try {
                 attrs = await $dataState.zarrGroup.attrs.asObject() || {};
             } catch (attrError) {
-                console.log('Could not load zarr attributes:', attrError);
                 attrs = {};
             }
             
