@@ -118,7 +118,7 @@
         <!-- Chart Container -->
         <div class="flex-1 bg-white rounded-lg shadow-md overflow-hidden">
             <div class="p-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Visualization</h3>
+                <!-- <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Visualization</h3> -->
                 <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 chart-wrapper">
                     {#if !isInitialized || !plotData}
                         <ChartLoadingStates showInitializing={true} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, untrack } from 'svelte';
+    import { onMount } from 'svelte';
     import * as d3 from 'd3';
     import type { OverviewDataPoint } from '../../services/chart/ChartDataService';
 
@@ -10,7 +10,6 @@
         globalYMin: number;
         globalYMax: number;
         zoomLevel?: number | null;
-        timeBetweenPoints: number;
     }
 
     let {
@@ -18,8 +17,7 @@
         totalTime,
         globalYMin,
         globalYMax,
-        zoomLevel = null,
-        timeBetweenPoints
+        zoomLevel = null
     }: ChartProps = $props();
 
     // DOM references
@@ -157,13 +155,38 @@
 
         const svg = d3.select(svgElement);
 
-        svg.select('.x-axis').call(d3.axisBottom(xScale) as any);
-        svg.select('.y-axis').call(d3.axisLeft(yScale) as any);
+        // Create X axis with grid lines
+        const xAxis = d3.axisBottom(xScale)
+            .tickSize(-chartDimensions.innerHeight)
+            .tickFormat(d => `${d3.format("~s")(d)}s`);
+
+        // Create Y axis with grid lines
+        const yAxis = d3.axisLeft(yScale)
+            .tickSize(-chartDimensions.innerWidth)
+            .tickFormat(d => `${Number(d).toFixed(1)}`);
+
+        svg.select('.x-axis').call(xAxis as any);
+        svg.select('.y-axis').call(yAxis as any);
+
+        // Style grid lines
+        svg.selectAll('.x-axis .tick line')
+            .attr('stroke', '#e0e0e0')
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.7);
+
+        svg.selectAll('.y-axis .tick line')
+            .attr('stroke', '#e0e0e0')
+            .attr('stroke-width', 1)
+            .attr('opacity', 0.7);
+
+        // Hide the main axis lines (domain)
+        svg.selectAll('.x-axis .domain, .y-axis .domain')
+            .attr('stroke', '#666')
+            .attr('stroke-width', 1);
     });
 </script>
 
 <div bind:this={containerElement} class="chart-container">
-    <h4 class="chart-title">Svelte D3 Test Chart</h4>
     <div class="svg-wrapper">
         <svg
             bind:this={svgElement}
@@ -183,10 +206,10 @@
             {/if}
 
             <!-- Axis labels -->
-            <text x={dimensions.width / 2} y={dimensions.height - 5} text-anchor="middle" font-size="12px">
+            <text x={dimensions.width / 2} y={dimensions.height - 5} text-anchor="middle" font-size="14px">
                 Time (s)
             </text>
-            <text x={-(dimensions.height / 2)} y={15} transform="rotate(-90)" text-anchor="middle" font-size="12px">
+            <text x={-(dimensions.height / 2)} y={15} transform="rotate(-90)" text-anchor="middle" font-size="14px">
                 Voltage (mV)
             </text>
 
@@ -225,12 +248,6 @@
         overflow: hidden;
     }
 
-    .chart-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
     .svg-wrapper {
         flex: 1;
         min-height: 250px;
@@ -249,7 +266,7 @@
     /* Axis styling */
     :global(.x-axis text),
     :global(.y-axis text) {
-        font-size: clamp(10px, 2vw, 12px);
+        font-size: clamp(11px, 2vw, 14px);
     }
 
     :global(.x-axis line),

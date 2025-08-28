@@ -98,14 +98,31 @@
         }
     }
 
-    function handleZoomReset() {
-        console.log('Zoom Reset clicked');
-        dispatch('zoomReset');
-    }
+    // Functions
+    function handleDefaults() {
+        console.log('Defaults clicked');
+        // Reset to default zoom level and position
+        if (zoomLevels.length > 0) {
+            let defaultLevel;
+            let defaultIndex;
 
-    function handleReloadData() {
-        console.log('Reload Data clicked');
-        dispatch('reloadData');
+            if (zoomLevels.length <= 2) {
+                defaultIndex = 0;
+            } else {
+                // Select third item from the bottom
+                defaultIndex = zoomLevels.length - 3;
+            }
+
+            defaultLevel = zoomLevels[defaultIndex];
+
+            if (defaultLevel) {
+                selectedZoomLevel = defaultLevel.value;
+                defaultSet = true;
+
+                // Dispatch with default position (center of data)
+                dispatch('zoomLevelChange', { zoomLevel: selectedZoomLevel, position: Math.floor(totalSamples / 2) });
+            }
+        }
     }
 
     function handleDropdownChange(event) {
@@ -117,30 +134,10 @@
 </script>
 
 <div class="zoom-controls bg-white p-6 rounded-lg shadow-md min-w-[200px] max-w-[240px]">
-    <h3 class="text-lg font-semibold text-gray-800 m-0 mb-4">Zoom Controls</h3>
-    
-    <!-- Control buttons -->
-    <div class="flex gap-2 mb-6">
-        <button 
-            onclick={handleZoomReset} 
-            title="Reset zoom"
-            class="flex-1 p-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 hover:text-gray-700 hover:-translate-y-0.5 transition-all text-gray-600 text-xs cursor-pointer"
-        >
-            🔄 Reset
-        </button>
-        <button 
-            onclick={handleReloadData} 
-            title="Reload data"
-            class="flex-1 p-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 hover:text-gray-700 hover:-translate-y-0.5 transition-all text-gray-600 text-xs cursor-pointer"
-        >
-            ♻️ Reload
-        </button>
-    </div>
+    <h3 class="text-lg font-semibold text-gray-800 m-0 mb-4">Zoom Level</h3>
     
     <!-- Zoom Level -->
     <div class="mb-6">
-        <h4 class="text-sm font-medium text-gray-700 m-0 mb-3">Zoom Level</h4>
-        
         <div class="flex gap-2 mb-4">
             <button 
                 onclick={handleZoomIn} 
@@ -149,6 +146,13 @@
                 class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer {canZoomIn ? 'bg-emerald-500 hover:bg-emerald-600 hover:-translate-y-0.5' : 'bg-gray-400 cursor-not-allowed'}"
             >
                 ➕ In
+            </button>
+            <button 
+                onclick={handleDefaults} 
+                title="Reset to defaults"
+                class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer bg-blue-500 hover:bg-blue-600 hover:-translate-y-0.5"
+            >
+                🎯 Defaults
             </button>
             <button 
                 onclick={handleZoomOut} 
@@ -161,7 +165,6 @@
         </div>
         
         <div class="mb-2">
-            <label for="zoomSelect" class="block text-xs font-medium text-gray-600 mb-1">Time Span:</label>
             <select 
                 id="zoomSelect"
                 bind:value={selectedZoomLevel}
