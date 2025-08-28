@@ -261,7 +261,7 @@ test.describe("ZoomingOnline App Flow", () => {
     console.log("📍 Step 15: Checking if zoom rectangle is displayed");
 
     // Look for zoom rectangle in the SVG
-    const zoomRect = page.locator(".zoom-rect, rect.zoom-rect");
+    const zoomRect = page.locator(".draggable-rect, rect.draggable-rect");
     await expect(zoomRect).toBeVisible({ timeout: 3000 });
     console.log("✅ Zoom rectangle is visible on the overview plot");
 
