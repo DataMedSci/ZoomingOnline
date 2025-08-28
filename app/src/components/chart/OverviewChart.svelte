@@ -31,11 +31,11 @@
     });
 
     // Constants
-    const MARGIN = { top: 20, right: 30, bottom: 40, left: 50 } as const;
+    const MARGIN = { top: 10, right: 10, bottom: 35, left: 80 } as const;
     const MIN_WIDTH = 400;
     const MAX_WIDTH = 1200;
     const MIN_HEIGHT = 300;
-    const MAX_HEIGHT = 800;
+    const MAX_HEIGHT = 500;
     const DEFAULT_RECT_WIDTH = 80;
     const RESIZE_THROTTLE_MS = 100;
 
@@ -205,7 +205,7 @@
     });
 </script>
 
-<div bind:this={containerElement} class="w-full h-full max-h-[600px] min-h-[300px] flex flex-col p-4 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+<div bind:this={containerElement} class="w-full h-full max-h-[600px] min-h-[300px] flex flex-col p-1 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
     <div class="flex-1 min-h-[250px] max-h-[500px] w-full relative overflow-hidden">
         <svg
             bind:this={svgElement}

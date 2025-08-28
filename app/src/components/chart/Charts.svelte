@@ -86,9 +86,9 @@
 
 <style>
     .chart-wrapper {
-        height: 500px; /* Fixed height to prevent infinite growth */
-        max-height: 600px;
-        min-height: 400px;
+        height: 400px; /* Fixed height to prevent infinite growth */
+        max-height: 500px;
+        min-height: 300px;
         overflow: hidden; /* Ensure content doesn't overflow */
     }
 </style>
@@ -100,9 +100,7 @@
     <div class="flex gap-4">
         <!-- Chart Container -->
         <div class="flex-1 bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-4">
-                <!-- <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Visualization</h3> -->
-                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 chart-wrapper">
+                <div class="p-2 bg-gray-50 rounded-lg border border-gray-200 chart-wrapper">
                     {#if !isInitialized || !plotData}
                         <ChartLoadingStates showInitializing={true} />
                     {:else}
@@ -118,12 +116,11 @@
                         />
                     {/if}
                 </div>
-            </div>
         </div>
         
         <!-- Zoom Controls -->
         {#if isInitialized && plotData}
-            <div class="flex-shrink-0 w-80">
+            <div class="flex-shrink-0 w-120">
                 <ChartZoomControls
                     timeBetweenPoints={plotData.horiz_interval}
                     segmentDuration={plotData.total_time_s}
