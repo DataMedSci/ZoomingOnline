@@ -9,7 +9,7 @@
     import { openZarr, calculateDatasetInfoFrom } from '../../services/dataService';
     import DatasetInfo from '../../components/DatasetInfo.svelte';
     import SelectionForm from '../../components/SelectionForm.svelte';
-    import { parseParamInt, stripURLFromHashAndAttributes } from '../../utils/urlParams';
+    import { parseParamInt } from '../../utils/urlParams';
     import MissingDataState from '../../components/MissingDataState.svelte';
 
 
@@ -17,8 +17,6 @@
     const channelURLParam: number = $derived(parseParamInt('ch'));
     const trcURLParam: number = $derived(parseParamInt('trc'));
     const segmentURLParam: number = $derived(parseParamInt('seg'));
-    const currentHref: string = $derived(page.url.toString());
-    const baseSelectionUrl = $derived(stripURLFromHashAndAttributes(page.url.toString()));
 
     let datasetState: { loading: boolean; ready: boolean; error: string | null } = $state({
         loading: false,
@@ -76,14 +74,14 @@
     {#if !dataURLParam}
         <MissingDataState />
     {:else if datasetState.loading}
-        <LoadingState loadingMessage="Loading dataset information..." />
+        <LoadingState loadingMessage="Loading dataset information from {dataURLParam}..." />
     {:else if datasetState.error}
         <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
             <div class="flex items-center mb-2">
                 <div class="w-5 h-5 text-red-600 mr-2">
                     <CircleAlert />
                 </div>
-                <h3 class="text-red-800 font-medium">Error Loading Dataset</h3>
+                <h3 class="text-red-800 font-medium">Error Loading Dataset from {dataURLParam}</h3>
             </div>
             <p class="text-red-700 mb-4">{datasetState.error}</p>
             <button class="btn-secondary btn-sm" onclick={() => goto(resolve('/'))}>
@@ -95,16 +93,11 @@
             {#if datasetInfo}
                 <DatasetInfo datasetInfo={datasetInfo} datasetUrl={dataURLParam} />
             {:else}
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p class="text-yellow-800">Loading dataset information...</p>
-                </div>
+                <LoadingState loadingMessage="Loading dataset information from {dataURLParam}..." />
             {/if}
 
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Selection Parameters</h2>
-                <!-- Channel: {channelURLParam}, TRC: {trcURLParam}, Segment: {segmentURLParam}
-                Count: Channels: {channelCount}, TRCs: {trcCount}, Segments: {segmentCount} -->
-
                 <SelectionForm 
                     noOfChannels={channelCount}
                     noOfTrcFiles={trcCount}
