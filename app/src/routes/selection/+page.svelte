@@ -38,6 +38,22 @@
         return url.searchParams.get('data');
     });
 
+    // Get selection parameters from URL
+    const channelParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('channel');
+    });
+
+    const trcParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('trc');
+    });
+
+    const segmentParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('segment');
+    });
+
     // Check if data is ready for plotting (data loaded, no need for selection validation)
     const plotReady = $derived(dataReady);
     $effect(() => {
@@ -54,9 +70,30 @@
             goto(resolve('/'));
             return;
         }
-        
+
         if (dataReady && !hasInitialized) {
             hasInitialized = true;
+
+            // Read URL parameters and set selection if available
+            const urlParams = new URLSearchParams(page.url.search);
+            const channelParam = urlParams.get('channel');
+            const trcParam = urlParams.get('trc');
+            const segmentParam = urlParams.get('segment');
+
+            // Set channel if parameter exists and is valid
+            if (channelParam && options.channels.includes(channelParam)) {
+                selectedChannel = channelParam;
+            }
+
+            // Set TRC if parameter exists and is valid
+            if (trcParam && options.trcFiles.includes(trcParam)) {
+                selectedTrc = trcParam;
+            }
+
+            // Set segment if parameter exists and is valid
+            if (segmentParam && options.segments.includes(segmentParam)) {
+                selectedSegment = segmentParam;
+            }
         }
     });
 
