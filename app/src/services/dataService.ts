@@ -2,76 +2,64 @@
  * dataService.ts
  *
  * Service for loading and retrieving Zarr-formatted data from a URL.
- * Orchestrates store updates and provides data access helpers.
  */
 
 import { openGroup, openArray, slice, HTTPStore } from "zarr";
-import { actions } from "../stores";
 
-/**
- * Reset all application state (replacement for old resetAppState)
- */
-function resetAppState(): void {
-  actions.reset();
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
 /**
- * Load Zarr data from a remote URL
+ * Open a Zarr group and primary arrays from a HTTP URL and return
+ * the loaded handles. This is a pure function and does not touch
+ * any global app state - callers should store results in their
+ * local component state (Svelte runes) as required.
  */
-export async function loadZarrData(url: string): Promise<void> {
+export async function openZarr(url: string): Promise<{
+  zarrGroup: any;
+  rawStore: any;
+  overviewStore: any | null;
+  url: string;
+}> {
+  // Create HTTP store for remote access
+  const store = new HTTPStore(url);
+
+  // Open the Zarr group and arrays with timeout
+  const group = await Promise.race([
+    openGroup(store),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout opening group")), 10000),
+    ),
+  ]);
+
+  const raw = await Promise.race([
+    openArray({ store, path: "raw" }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout opening raw array")), 10000),
+    ),
+  ]);
+
+  let overview: any;
   try {
-    resetAppState();
-
-    actions.setLoading(true);
-
-    // Create HTTP store for remote access
-    const store = new HTTPStore(url);
-
-    // Open the Zarr group and arrays with timeout
-    const group = await Promise.race([
-      openGroup(store),
+    overview = await Promise.race([
+      openArray({ store, path: "overview/0" }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout opening group")), 10000),
-      ),
-    ]);
-
-    const raw = await Promise.race([
-      openArray({ store, path: "raw" }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout opening raw array")), 10000),
-      ),
-    ]);
-
-    let overview: any;
-    try {
-      overview = await Promise.race([
-        openArray({ store, path: "overview/0" }),
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Timeout opening overview array")),
-            10000,
-          ),
+        setTimeout(
+          () => reject(new Error("Timeout opening overview array")),
+          10000,
         ),
-      ]);
-    } catch {
-      overview = null;
-    }
-
-    // Update stores
-    actions.setData({
-      zarrGroup: group,
-      rawStore: raw,
-      overviewStore: overview,
-      url: url,
-      isLoaded: true,
-    });
-
-    actions.setLoading(false);
-  } catch (error) {
-    actions.setLoading(false); // Make sure to reset loading state on error
-    actions.setError(`Failed to load Zarr data: ${(error as Error).message}`);
-    throw error;
+      ),
+    ]);
+  } catch {
+    overview = null;
   }
+
+    // ← Artificial delay
+  await sleep(2000); // 3 seconds
+
+  return { zarrGroup: group, rawStore: raw, overviewStore: overview, url };
 }
 
 /**

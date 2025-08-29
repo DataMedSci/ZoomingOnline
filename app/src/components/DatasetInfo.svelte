@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { formatTime, formatFileSize } from '../utils/mathUtils.ts';
+    import { formatTime, formatFileSize } from '../utils/mathUtils';
     
-    // Props using Svelte 5 $props() with proper TypeScript typing
-    const { 
-        datasetInfo 
+    const {
+        datasetInfo,
+        datasetUrl
     }: {
         datasetInfo: any;
+        datasetUrl?: string | null;
     } = $props();
     
     // Helper function to safely format numbers
@@ -46,8 +47,8 @@
         </div>
         <div class="grid grid-cols-2 items-center py-1">
             <span class="font-medium text-gray-600">Data source:</span>
-            <span class="text-blue-600 font-mono text-right text-xs break-all" title={datasetInfo.url || 'N/A'}>
-                {datasetInfo.url && datasetInfo.url.length > 60 ? '...' + datasetInfo.url.slice(-60) : (datasetInfo.url || 'N/A')}
+            <span class="text-blue-600 font-mono text-right text-xs break-all" title={datasetUrl || 'N/A'}>
+                {datasetUrl && datasetUrl.length > 60 ? '...' + datasetUrl.slice(-60) : (datasetUrl || 'N/A')}
             </span>
         </div>
     </div>

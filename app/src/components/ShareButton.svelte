@@ -1,6 +1,5 @@
 <script>
     import { Share2, Copy, Check } from '@lucide/svelte';
-    import { showCopyLink, dataUrl } from '../stores/index';
     import Modal from './Modal.svelte';
     
     // Local component state using runes
@@ -47,7 +46,7 @@
     }
 </script>
 
-{#if $showCopyLink}
+{#if typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('data')}
     <button class="btn-primary btn-sm flex gap-2 items-center" onclick={openModal}>
         <Share2  class="w-4 h-4" />
         <span>Share</span>

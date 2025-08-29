@@ -1,17 +1,14 @@
 <script lang="ts">
     import { CloudDownload } from '@lucide/svelte';
     
-    // Props using Svelte 5 $props() with proper TypeScript typing
     let { 
         inputUrl = $bindable(''),
         exampleUrl = '',
-        isLoading = false,
         placeholder = '',
         onload = () => {}
     }: {
         inputUrl?: string;
         exampleUrl?: string;
-        isLoading?: boolean;
         placeholder?: string;
         onload?: (data: { url: string }) => void;
     } = $props();
@@ -54,7 +51,6 @@
             <button 
                 class="btn-secondary btn-sm" 
                 onclick={loadExample}
-                disabled={isLoading}
                 title="Click to copy example URL to input field"
             >
                 Copy Example URL
@@ -62,7 +58,6 @@
             <button 
                 class="btn-primary btn-sm" 
                 onclick={loadExampleData}
-                disabled={isLoading}
                 title="Load example dataset directly"
             >
                 Load Example Data
@@ -70,7 +65,6 @@
             <button 
                 class="btn-primary btn-sm" 
                 onclick={() => onload?.({ url: 'https://s3.cloud.cyfronet.pl/zooming-online/1nA/1nA.zarr' })}
-                disabled={isLoading}
                 title="Load 1nA dataset directly"
             >
                 Load 1nA Data
@@ -78,7 +72,6 @@
             <button 
                 class="btn-primary btn-sm" 
                 onclick={() => onload?.({ url: 'https://s3.cloud.cyfronet.pl/zooming-online/64nA/64nA.zarr' })}
-                disabled={isLoading}
                 title="Load 64nA dataset directly"
             >
                 Load 64nA Data
@@ -93,16 +86,15 @@
             bind:value={inputUrl}
             placeholder={placeholder || exampleUrl}
             onkeydown={handleKeyPress}
-            disabled={isLoading}
         />
         <div class="flex justify-center">
             <button 
                 class="btn-primary px-6 py-3 md:px-4 md:py-2 text-base md:text-sm flex items-center gap-2"
                 onclick={handleLoadData}
-                disabled={isLoading || !inputUrl.trim()}
+                disabled={!inputUrl.trim()}
             >
                 <CloudDownload class="w-5 h-5 md:w-4 md:h-4"/>
-                <span>{isLoading ? 'Loading...' : 'Load Data'}</span>
+                <span>'Load Data'</span>
             </button>
         </div>
     </div>

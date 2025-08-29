@@ -1,84 +1,71 @@
 <script lang="ts">
-    // Props using Svelte 5 $props() with proper TypeScript typing
+    import { goto } from "$app/navigation";
+    import { resolve } from '$app/paths';
+
     const { 
-        channels = [],
-        trcFiles = [],
-        segments = [],
-        selectedChannel = '',
-        selectedTrc = '',
-        selectedSegment = '',
-        isDataReadyForPlot = false,
-        onSelectionChange = () => {},
-        onPlot = () => {},
-        onLoadDifferent = () => {}
+        noOfChannels = 0,
+        noOfTrcFiles = 0,
+        noOfSegments = 0,
+        defaultChannel = 1,
+        defaultTrc = 1,
+        defaultSegment = 1,
+        dataURLParam = '',
     }: {
-        channels?: string[];
-        trcFiles?: string[];
-        segments?: string[];
-        selectedChannel?: string;
-        selectedTrc?: string;
-        selectedSegment?: string;
-        isDataReadyForPlot?: boolean;
-        onSelectionChange?: (field: string, value: string) => void;
-        onPlot?: () => void;
-        onLoadDifferent?: () => void;
+        noOfChannels?: number;
+        noOfTrcFiles?: number;
+        noOfSegments?: number;
+        defaultChannel?: number;
+        defaultTrc?: number;
+        defaultSegment?: number;
+        dataURLParam?: string;
     } = $props();
-    
-    // Handle selection changes using runes callback pattern
-    function handleChannelChange(event: Event): void {
-        const target = event.target as HTMLSelectElement;
-        onSelectionChange?.('channel', target.value);
+
+    let selectedChannel: number = $state(defaultChannel);
+    let selectedTrc: number = $state(defaultTrc);
+    let selectedSegment: number = $state(defaultSegment);
+
+    function plotData() {
+        goto(`${resolve('/visualization')}?data=${dataURLParam}&ch=${selectedChannel}&trc=${selectedTrc}&seg=${selectedSegment}`);
     }
-    
-    function handleTrcChange(event: Event): void {
-        const target = event.target as HTMLSelectElement;
-        onSelectionChange?.('trc', target.value);
-    }
-    
-    function handleSegmentChange(event: Event): void {
-        const target = event.target as HTMLSelectElement;
-        onSelectionChange?.('segment', target.value);
-    }
-    
-    // Handle plot button click
-    function handlePlotData(): void {
-        onPlot?.();
-    }
-    
-    // Handle load different dataset
-    function handleLoadDifferent(): void {
-        onLoadDifferent?.();
+
+    function updateURL() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('ch', selectedChannel.toString());
+        params.set('trc', selectedTrc.toString());
+        params.set('seg', selectedSegment.toString());
+        params.set('data', dataURLParam);    
+        goto(`${resolve('/selection')}?${params.toString()}`, { replaceState: true });
     }
 </script>
 
 <div class="flex flex-col gap-6">
+    Data = {dataURLParam} <br>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="flex flex-col">
             <label for="channel-select" class="mb-2 font-semibold text-gray-600">Channel:</label>
             <select 
                 id="channel-select" 
-                value={selectedChannel} 
-                onchange={handleChannelChange}
+                bind:value={selectedChannel}
                 class="form-select"
+                onchange={updateURL}
             >
                 <option value="">Select Channel</option>
-                {#each channels as channel}
-                    <option value={channel}>{channel}</option>
+                {#each { length: noOfChannels } as _, i}
+                    <option value={i + 1}>{i + 1}</option>
                 {/each}
             </select>
         </div>
-
         <div class="flex flex-col">
             <label for="trc-select" class="mb-2 font-semibold text-gray-600">TRC File:</label>
             <select 
                 id="trc-select" 
-                value={selectedTrc} 
-                onchange={handleTrcChange}
+                bind:value={selectedTrc}
                 class="form-select"
+                onchange={updateURL}
             >
                 <option value="">Select TRC File</option>
-                {#each trcFiles as trc}
-                    <option value={trc}>{trc}</option>
+                {#each { length: noOfTrcFiles } as _, i}
+                    <option value={i + 1}>{i + 1}</option>
                 {/each}
             </select>
         </div>
@@ -87,13 +74,13 @@
             <label for="segment-select" class="mb-2 font-semibold text-gray-600">Segment:</label>
             <select 
                 id="segment-select" 
-                value={selectedSegment} 
-                onchange={handleSegmentChange}
+                bind:value={selectedSegment}
                 class="form-select"
+                onchange={updateURL}
             >
                 <option value="">Select Segment</option>
-                {#each segments as segment}
-                    <option value={segment}>{segment}</option>
+                {#each { length: noOfSegments } as _, i}
+                    <option value={i + 1}>{i + 1}</option>
                 {/each}
             </select>
         </div>
@@ -101,19 +88,17 @@
 
     <div class="flex flex-col md:flex-row justify-center items-center gap-6 mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
         <button 
-            class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none w-full md:w-auto max-w-xs"
-            disabled={!isDataReadyForPlot}
-            onclick={handlePlotData}
+            class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 w-full md:w-auto max-w-xs"
+            onclick={plotData}
         >
             Plot Selected Data
         </button>
 
         <button 
             class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 w-full md:w-auto max-w-xs"
-            onclick={handleLoadDifferent}
+            onclick={() => goto(resolve('/'))}
         >
             ← Load Different Dataset
         </button>
     </div>
 </div>
-

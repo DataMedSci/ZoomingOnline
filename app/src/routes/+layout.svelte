@@ -1,9 +1,4 @@
-<script lang="ts">
-    import { 
-        setError
-    } from '../stores/index';
-    
-    // Import components
+<script lang="ts">   
     import Header from '../components/Header.svelte';
     import ErrorBoundary from '../components/ErrorBoundary.svelte';
     import '../app.css';
@@ -18,18 +13,13 @@
     
     function handleLayoutError(error: Error): void {
         console.error('Layout error:', error);
-        setError(error.message);
     }
 
-    function handleRetryLayout(): void {
-        setError(null);
-    }
 </script>
 
 <ErrorBoundary 
     context="Application Layout"
     onError={handleLayoutError}
-    onRetry={handleRetryLayout}
 >
     <main class="w-full max-w-6xl mx-auto px-4">
         <Header />

@@ -1,8 +1,5 @@
 <script lang="ts">
-    import {
-        dataState,
-        uiState
-    } from '../../stores/appState';
+    // Props and runtime imports
     import { initializePlotData } from '../../renderers/chartRenderer';
     import OverviewChart from './OverviewChart.svelte';
     import Zoom1Chart from './Zoom1Chart.svelte';
@@ -11,14 +8,31 @@
     import DualZoomControls from './DualZoomControls.svelte';
     import type { PlotDataResult } from '../../renderers/chartRenderer';
 
-    // Props for selection values (moved from store)
+    // Props for selection values (use actual values, not indices)
     interface Props {
-        channelIndex: number;
-        trcIndex: number;
-        segmentIndex: number;
+        channel?: string | number;
+        trc?: string | number;
+        segment?: string | number;
     }
-    
-    let { channelIndex, trcIndex, segmentIndex }: Props = $props();
+
+    let { channel, trc, segment }: Props = $props();
+
+    // Normalize to numeric indices for internal use (0-based)
+    const channelIndex = Number.isFinite(Number(channel)) ? Number(channel) - 1 : 0;
+    const trcIndex = Number.isFinite(Number(trc)) ? Number(trc) - 1 : 0;
+    const segmentIndex = Number.isFinite(Number(segment)) ? Number(segment) - 1 : 0;
+
+    // Extend Props to include loaded Zarr handles
+    interface Props {
+        channel?: string | number;
+        trc?: string | number;
+        segment?: string | number;
+        rawStore?: any | null;
+        overviewStore?: any | null;
+        zarrGroup?: any | null;
+    }
+
+    let { channel, trc, segment, rawStore, overviewStore, zarrGroup }: Props = $props();
 
     // Component state using Svelte 5 runes with proper TypeScript typing
     let plotData = $state<PlotDataResult | null>(null);
@@ -33,25 +47,10 @@
     let overviewRectanglePosition = $state<number>(0.5); // Center
     let zoom1RectanglePosition = $state<number>(0.5); // Center
 
-    // Get current values from stores
-    let currentData = $state(null as any);
-    let currentUI = $state(null as any);
-
-    // Subscribe to store updates
-    $effect(() => {
-        const unsubscribeData = dataState.subscribe(value => currentData = value);
-        const unsubscribeUI = uiState.subscribe(value => currentUI = value);
-
-        return () => {
-            unsubscribeData();
-            unsubscribeUI();
-        };
-    });
-
     const canInitialize = $derived<boolean>(
-        currentData?.rawStore !== null &&
-        currentData?.zarrGroup !== null &&
-        currentData?.overviewStore !== null &&
+        rawStore !== null &&
+        zarrGroup !== null &&
+        overviewStore !== null &&
         typeof channelIndex === 'number' &&
         typeof trcIndex === 'number' &&
         typeof segmentIndex === 'number' &&
@@ -78,9 +77,9 @@
             chartError = null;
 
             const result = await initializePlotData(
-                currentData.rawStore,
-                currentData.zarrGroup,
-                currentData.overviewStore,
+                rawStore,
+                zarrGroup,
+                overviewStore,
                 channelIndex,
                 trcIndex,
                 segmentIndex
@@ -153,9 +152,9 @@
 </style>
 
 <!-- Chart container -->
-<ChartLoadingStates isLoading={currentUI?.isLoading} error={currentUI?.error || chartError} />
+<ChartLoadingStates isLoading={false} error={chartError} />
 
-{#if !currentUI?.isLoading && !currentUI?.error && !chartError}
+{#if !chartError}
     <div class="space-y-6">
         <!-- Row 1: Overview Chart -->
         <div class="chart-row">
@@ -247,14 +246,14 @@
                             <ChartLoadingStates showInitializing={true} />
                         {:else}
                             <!-- Zoom2 Chart -->
-                            <Zoom2Chart
-                                rawData={currentData?.rawStore?.data || []}
+                                <Zoom2Chart
+                                rawData={rawStore?.data || []}
                                 totalTime={plotData.total_time_s}
                                 globalYMin={plotData.globalYMin ?? 0}
                                 globalYMax={plotData.globalYMax ?? 1}
                                 rectanglePosition={zoom1RectanglePosition}
                                 rectangleWidth={zoom1ZoomLevel ? zoom1ZoomLevel / plotData.total_time_s : 0.01}
-                                samplingRate={currentData?.rawStore?.metadata?.samples ? plotData.no_of_samples / plotData.total_time_s : 1000}
+                                samplingRate={rawStore?.metadata?.samples ? plotData.no_of_samples / plotData.total_time_s : 1000}
                             />
                         {/if}
                     </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { generateZoomLevelsWithLabels } from '../utils/zoomLevels';
-    import { ZoomService } from '../stores/index';
+    import { ZoomService } from '../services/zoomService';
     import { ZoomIn, ZoomOut } from '@lucide/svelte';
 
     // Props using Svelte 5 runes syntax
