@@ -4,9 +4,6 @@
     import { page } from '$app/state';
     import { 
         isDataReadyForPlot,
-        selectedChannelIndex,
-        selectedTrcIndex,
-        selectedSegmentIndex,
         isLoading,
         isDataLoaded
     } from '../../stores/index';
@@ -18,13 +15,29 @@
     // Local component state using runes
     let hasInitialized = $state(false);
 
+    // Selection values from URL parameters
+    const channelParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('channel') || '1';
+    });
+    const trcParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('trc') || '1';
+    });
+    const segmentParam = $derived(() => {
+        const url = new URL(page.url);
+        return url.searchParams.get('segment') || '1';
+    });
+
+    // Convert to indices for display
+    const channelIndex = $derived(parseInt(channelParam()) - 1);
+    const trcIndex = $derived(parseInt(trcParam()) - 1);
+    const segmentIndex = $derived(parseInt(segmentParam()) - 1);
+
     // Global store access using derived runes
     const plotReady = $derived($isDataReadyForPlot);
     const loading = $derived($isLoading);
     const dataLoaded = $derived($isDataLoaded);
-    const channelIndex = $derived($selectedChannelIndex);
-    const trcIndex = $derived($selectedTrcIndex);
-    const segmentIndex = $derived($selectedSegmentIndex);
 
     // Add/remove visualization-page class to body
     onMount(() => {
@@ -37,15 +50,26 @@
 
     // Navigation guard using runes effect
     $effect(() => {
-        // Guard: if visualization isn't ready (no selections/data), navigate back to selection
+        // Guard: if visualization isn't ready (no data), navigate back to selection
         if (!plotReady && !loading && dataLoaded && hasInitialized) {
-            // Preserve data parameter from current URL when redirecting back to selection
+            // Preserve data and selection parameters when redirecting back to selection
             const currentUrl = new URL(page.url);
             const dataParam = currentUrl.searchParams.get('data');
+            const channelParam = currentUrl.searchParams.get('channel');
+            const trcParam = currentUrl.searchParams.get('trc');
+            const segmentParam = currentUrl.searchParams.get('segment');
 
             let selectionUrl = `${resolve('/selection')}`;
-            if (dataParam) {
-                selectionUrl += `?data=${encodeURIComponent(dataParam)}`;
+            const params = new URLSearchParams();
+            
+            if (dataParam) params.set('data', dataParam);
+            if (channelParam) params.set('channel', channelParam);
+            if (trcParam) params.set('trc', trcParam);
+            if (segmentParam) params.set('segment', segmentParam);
+            
+            const paramString = params.toString();
+            if (paramString) {
+                selectionUrl += `?${paramString}`;
             }
             
             goto(selectionUrl);
@@ -58,13 +82,24 @@
     });
 
     function handleGoBack() {
-        // Preserve data parameter from current URL when going back to selection
+        // Preserve data and selection parameters from current URL when going back to selection
         const currentUrl = new URL(page.url);
         const dataParam = currentUrl.searchParams.get('data');
+        const channelParam = currentUrl.searchParams.get('channel');
+        const trcParam = currentUrl.searchParams.get('trc');
+        const segmentParam = currentUrl.searchParams.get('segment');
 
         let selectionUrl = `${resolve('/selection')}`;
-        if (dataParam) {
-            selectionUrl += `?data=${encodeURIComponent(dataParam)}`;
+        const params = new URLSearchParams();
+        
+        if (dataParam) params.set('data', dataParam);
+        if (channelParam) params.set('channel', channelParam);
+        if (trcParam) params.set('trc', trcParam);
+        if (segmentParam) params.set('segment', segmentParam);
+        
+        const paramString = params.toString();
+        if (paramString) {
+            selectionUrl += `?${paramString}`;
         }
         
         goto(selectionUrl);
@@ -96,6 +131,6 @@
             <ShareButton />
         </div>
         
-        <Charts />
+        <Charts channelIndex={channelIndex} trcIndex={trcIndex} segmentIndex={segmentIndex} />
     </div>
 {/if}

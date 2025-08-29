@@ -4,10 +4,8 @@
     import { page } from '$app/state';
     import { CircleAlert, CheckCircle } from '@lucide/svelte';
     import { 
-        appState, 
         actions,
         isDataReady,
-        isDataReadyForPlot,
         selectorOptions,
         dataState,
         uiState
@@ -20,14 +18,17 @@
 
     // Local component state using Svelte 5 runes
     let hasInitialized = $state(false);
-    let datasetInfo = $state(null);
+    let datasetInfo = $state(null as any); // Dataset info object
     let isAutoLoading = $state(false);
 
+    // Selection state moved from store to local component state
+    let selectedChannel = $state('1');
+    let selectedTrc = $state('1');
+    let selectedSegment = $state('1');
+
     // Global store access using derived runes
-    const state = $derived($appState);
     const options = $derived($selectorOptions);
     const dataReady = $derived($isDataReady);
-    const plotReady = $derived($isDataReadyForPlot);
     const loading = $derived($uiState.isLoading);
     const error = $derived($uiState.error);
 
@@ -37,12 +38,8 @@
         return url.searchParams.get('data');
     });
 
-    // Selection values for the form (convert from indices) using derived runes
-    const selectedChannel = $derived(`${state.selection.channelIndex + 1}`);
-    const selectedTrc = $derived(`${state.selection.trcIndex + 1}`);
-    const selectedSegment = $derived(`${state.selection.segmentIndex + 1}`);
-
-    // Auto-load data from URL parameter
+    // Check if data is ready for plotting (data loaded, no need for selection validation)
+    const plotReady = $derived(dataReady);
     $effect(() => {
         const url = dataUrlParam();
         if (url && !dataReady && !isAutoLoading && !loading) {
@@ -82,7 +79,7 @@
             const pointsInSegment = shape[3] || 0; // Last dimension is time samples
             
             // Get attributes from zarr group with defensive access
-            let attrs = {};
+            let attrs: any = {};
             try {
                 attrs = await $dataState.zarrGroup.attrs.asObject() || {};
             } catch (attrError) {
@@ -126,17 +123,15 @@
 
     // Handle selection changes using callback pattern instead of events
     function handleSelectionChange(field: string, value: string) {
-        const index = parseInt(value) - 1; // Convert to 0-based index
-        
         switch (field) {
             case 'channel':
-                actions.updateSelection({ channelIndex: index });
+                selectedChannel = value;
                 break;
             case 'trc':
-                actions.updateSelection({ trcIndex: index });
+                selectedTrc = value;
                 break;
             case 'segment':
-                actions.updateSelection({ segmentIndex: index });
+                selectedSegment = value;
                 break;
         }
     }
@@ -149,8 +144,20 @@
             const dataParam = currentUrl.searchParams.get('data');
 
             let visualizationUrl = `${resolve('/visualization')}`;
+            const params = new URLSearchParams();
+            
             if (dataParam) {
-                visualizationUrl += `?data=${encodeURIComponent(dataParam)}`;
+                params.set('data', dataParam);
+            }
+            
+            // Add selection parameters
+            params.set('channel', selectedChannel);
+            params.set('trc', selectedTrc);
+            params.set('segment', selectedSegment);
+            
+            const paramString = params.toString();
+            if (paramString) {
+                visualizationUrl += `?${paramString}`;
             }
             
             await goto(visualizationUrl);
@@ -202,7 +209,7 @@
     </div>
 
     {#if loading}
-        <LoadingState message="Processing dataset..." />
+        <LoadingState loadingMessage="Processing dataset..." />
     {:else if error}
         <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
             <div class="flex items-center mb-2">

@@ -33,6 +33,7 @@ export interface OverviewDataPoint {
 
 export interface OverviewStore {
   data: OverviewDataPoint[];
+  shape?: number[];
   metadata: {
     totalSamples: number;
     samplingRate: number;
@@ -55,24 +56,6 @@ export interface UIState {
   error: string | null;
   showCopyLink: boolean;
   currentView: CurrentView;
-}
-
-// Selection Store Types
-export interface SelectionState {
-  selectedChannel: number | null;
-  selectedTrc: number | null;
-  selectedSegment: number | null;
-  selectedChannelIndex: number | null;
-  selectedTrcIndex: number | null;
-  selectedSegmentIndex: number | null;
-}
-
-export interface SelectionSummary {
-  channel: number | null;
-  trc: number | null;
-  segment: number | null;
-  isComplete: boolean;
-  description: string;
 }
 
 // Plot Configuration Types

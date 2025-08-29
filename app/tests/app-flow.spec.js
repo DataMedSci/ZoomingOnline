@@ -200,12 +200,12 @@ test.describe("ZoomingOnline App Flow", () => {
 
     console.log("📍 Checking default zoom level selection");
 
-    // Wait for zoom controls to be visible
-    const zoomControls = page.locator(".zoom-controls");
+    // Wait for zoom controls to be visible - now there are multiple, so target the first one
+    const zoomControls = page.locator(".zoom-controls").first();
     await expect(zoomControls).toBeVisible({ timeout: 5000 });
 
-    // Find the time span dropdown
-    const timeSpanSelect = page.locator("#zoomSelect");
+    // Find the time span dropdown within the first zoom control
+    const timeSpanSelect = zoomControls.locator("#zoomSelect-overview, #zoomSelect-zoom1").first();
     await expect(timeSpanSelect).toBeVisible({ timeout: 5000 });
 
     // Get all available options to understand what's generated
@@ -244,8 +244,8 @@ test.describe("ZoomingOnline App Flow", () => {
 
     console.log("📍 Checking if zoom rectangle is displayed");
 
-    // Look for zoom rectangle in the SVG
-    const zoomRect = page.locator(".draggable-rect, rect.draggable-rect");
+    // Look for zoom rectangle in the SVG - target the first one (overview chart)
+    const zoomRect = page.locator(".chart-rectangle, rect.chart-rectangle").first();
     await expect(zoomRect).toBeVisible({ timeout: 3000 });
     console.log("✅ Zoom rectangle is visible on the overview plot");
 
@@ -295,8 +295,9 @@ test.describe("ZoomingOnline App Flow", () => {
     // Test zoom rectangle width adjustment
     console.log("📍 Testing zoom rectangle width adjustment");
 
-    // Look for zoom in/out buttons
-    const zoomInButton = page.locator("button").filter({ hasText: "In" });
+    // Look for zoom in/out buttons in the first zoom control
+    const firstZoomControl = page.locator(".zoom-controls").first();
+    const zoomInButton = firstZoomControl.locator("button").filter({ hasText: "➕ In" });
     await expect(zoomInButton).toBeVisible({ timeout: 3000 });
 
     // Get rectangle width before zoom in
@@ -340,9 +341,38 @@ test.describe("ZoomingOnline App Flow", () => {
     const loadButton = page.locator('button:has-text("Load Data")');
     await loadButton.click();
 
-    // Should show error message
-    const errorMessage = page.locator('.error, .bg-red-50, [class*="error"]');
-    await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
+    // Wait for loading to start and then fail
+    await page.waitForTimeout(2000);
+
+    // Check for error message with multiple possible selectors
+    const errorSelectors = [
+      '.bg-red-50',
+      '[class*="error"]',
+      '.error',
+      'text=/Error|Failed|Invalid/i'
+    ];
+
+    let errorFound = false;
+    for (const selector of errorSelectors) {
+      try {
+        const element = page.locator(selector).first();
+        await expect(element).toBeVisible({ timeout: 5000 });
+        console.log(`✅ Error found with selector: ${selector}`);
+        errorFound = true;
+        break;
+      } catch (e) {
+        console.log(`❌ Error not found with selector: ${selector}`);
+      }
+    }
+
+    if (!errorFound) {
+      // Take a screenshot to debug
+      await page.screenshot({
+        path: "debug-error-handling.png",
+        fullPage: true,
+      });
+      throw new Error("No error message found after loading invalid URL");
+    }
 
     console.log("✅ Error handling test passed");
   });

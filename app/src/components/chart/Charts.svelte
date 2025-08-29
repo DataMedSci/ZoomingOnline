@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         dataState,
-        selectionState,
         uiState
     } from '../../stores/appState';
     import { initializePlotData } from '../../renderers/chartRenderer';
@@ -11,6 +10,15 @@
     import ChartLoadingStates from './ChartLoadingStates.svelte';
     import DualZoomControls from './DualZoomControls.svelte';
     import type { PlotDataResult } from '../../renderers/chartRenderer';
+
+    // Props for selection values (moved from store)
+    interface Props {
+        channelIndex: number;
+        trcIndex: number;
+        segmentIndex: number;
+    }
+    
+    let { channelIndex, trcIndex, segmentIndex }: Props = $props();
 
     // Component state using Svelte 5 runes with proper TypeScript typing
     let plotData = $state<PlotDataResult | null>(null);
@@ -27,18 +35,15 @@
 
     // Get current values from stores
     let currentData = $state(null as any);
-    let currentSelection = $state(null as any);
     let currentUI = $state(null as any);
 
     // Subscribe to store updates
     $effect(() => {
         const unsubscribeData = dataState.subscribe(value => currentData = value);
-        const unsubscribeSelection = selectionState.subscribe(value => currentSelection = value);
         const unsubscribeUI = uiState.subscribe(value => currentUI = value);
 
         return () => {
             unsubscribeData();
-            unsubscribeSelection();
             unsubscribeUI();
         };
     });
@@ -47,12 +52,12 @@
         currentData?.rawStore !== null &&
         currentData?.zarrGroup !== null &&
         currentData?.overviewStore !== null &&
-        currentSelection?.channelIndex !== null &&
-        currentSelection?.trcIndex !== null &&
-        currentSelection?.segmentIndex !== null &&
-        typeof currentSelection?.channelIndex === 'number' &&
-        typeof currentSelection?.trcIndex === 'number' &&
-        typeof currentSelection?.segmentIndex === 'number' &&
+        typeof channelIndex === 'number' &&
+        typeof trcIndex === 'number' &&
+        typeof segmentIndex === 'number' &&
+        channelIndex >= 0 &&
+        trcIndex >= 0 &&
+        segmentIndex >= 0 &&
         !isInitialized &&
         !chartError
     );
@@ -76,9 +81,9 @@
                 currentData.rawStore,
                 currentData.zarrGroup,
                 currentData.overviewStore,
-                currentSelection.channelIndex!,
-                currentSelection.trcIndex!,
-                currentSelection.segmentIndex!
+                channelIndex,
+                trcIndex,
+                segmentIndex
             );
             plotData = result;
         } catch (error) {
@@ -241,22 +246,6 @@
                         {#if !isInitialized || !plotData}
                             <ChartLoadingStates showInitializing={true} />
                         {:else}
-                            <!-- Debug: Log data being passed to Zoom2Chart -->
-                            {@const debugInfo = (() => {
-                                console.log('Charts.svelte - Zoom2Chart props:', {
-                                    rawData: currentData?.rawStore?.data,
-                                    rawDataLength: currentData?.rawStore?.data?.length,
-                                    totalTime: plotData.total_time_s,
-                                    rectanglePosition: zoom1RectanglePosition,
-                                    rectangleWidth: zoom1ZoomLevel ? zoom1ZoomLevel / plotData.total_time_s : 0.01,
-                                    zoom1ZoomLevel,
-                                    samplingRate: currentData?.rawStore?.metadata?.samples ? plotData.no_of_samples / plotData.total_time_s : 1000,
-                                    plotDataSamples: plotData.no_of_samples,
-                                    currentDataRawStore: currentData?.rawStore
-                                });
-                                return null;
-                            })()}
-
                             <!-- Zoom2 Chart -->
                             <Zoom2Chart
                                 rawData={currentData?.rawStore?.data || []}

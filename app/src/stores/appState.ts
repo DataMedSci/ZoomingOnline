@@ -26,13 +26,6 @@ interface AppState {
     version: number;
   };
 
-  // Selection state - simplified to use indices directly
-  selection: {
-    channelIndex: number;
-    trcIndex: number;
-    segmentIndex: number;
-  };
-
   // Plot state - consolidated from plotConfig and zoomState
   plot: {
     config: PlotConfig | null;
@@ -59,11 +52,6 @@ const defaultState: AppState = {
     isLoaded: false,
     version: 0,
   },
-  selection: {
-    channelIndex: 0,
-    trcIndex: 0,
-    segmentIndex: 0,
-  },
   plot: {
     config: null,
     zoomWidth: null,
@@ -82,10 +70,6 @@ export const appState: Writable<AppState> = writable(defaultState);
 
 // Selector functions for clean component access
 export const dataState = derived(appState, ($appState) => $appState.data);
-export const selectionState = derived(
-  appState,
-  ($appState) => $appState.selection,
-);
 export const plotState = derived(appState, ($appState) => $appState.plot);
 export const uiState = derived(appState, ($appState) => $appState.ui);
 
@@ -99,13 +83,11 @@ export const isDataReady = derived(
 );
 
 export const isDataReadyForPlot = derived(
-  [dataState, selectionState],
-  ([$dataState, $selectionState]) =>
+  dataState,
+  ($dataState) =>
     $dataState.isLoaded &&
     $dataState.rawStore !== null &&
-    $selectionState.channelIndex >= 0 &&
-    $selectionState.trcIndex >= 0 &&
-    $selectionState.segmentIndex >= 0,
+    $dataState.overviewStore !== null,
 );
 
 export const canInteract = derived(
@@ -145,31 +127,18 @@ export const actions = {
   },
 
   // Selection actions - work with indices directly
-  setSelection(selection: Partial<AppState["selection"]>) {
-    appState.update((state) => ({
-      ...state,
-      selection: { ...state.selection, ...selection },
-    }));
-  },
-
-  // Alias for setSelection to maintain compatibility
-  updateSelection(selection: Partial<AppState["selection"]>) {
-    this.setSelection(selection);
-  },
-
   setSelectionFromValues(channel: string, trc: string, segment: string) {
     const channelIndex = parseInt(channel) - 1;
     const trcIndex = parseInt(trc) - 1;
     const segmentIndex = parseInt(segment) - 1;
 
-    appState.update((state) => ({
-      ...state,
-      selection: {
-        channelIndex: Math.max(0, channelIndex),
-        trcIndex: Math.max(0, trcIndex),
-        segmentIndex: Math.max(0, segmentIndex),
-      },
-    }));
+    // Note: Selection values are now handled via URL parameters, not stored in state
+    console.log('Selection values:', { channelIndex, trcIndex, segmentIndex });
+  },
+
+  // Alias for setSelection to maintain compatibility
+  updateSelection(channel: string, trc: string, segment: string) {
+    this.setSelectionFromValues(channel, trc, segment);
   },
 
   // Plot actions
@@ -228,19 +197,6 @@ export const actions = {
 };
 
 // Backward compatibility exports for gradual migration
-export const selectedChannelIndex = derived(
-  selectionState,
-  ($selectionState) => $selectionState.channelIndex,
-);
-export const selectedTrcIndex = derived(
-  selectionState,
-  ($selectionState) => $selectionState.trcIndex,
-);
-export const selectedSegmentIndex = derived(
-  selectionState,
-  ($selectionState) => $selectionState.segmentIndex,
-);
-
 export const rawStore = derived(dataState, ($dataState) => $dataState.rawStore);
 export const overviewStore = derived(
   dataState,

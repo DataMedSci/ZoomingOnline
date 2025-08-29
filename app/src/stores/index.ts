@@ -11,7 +11,6 @@ import { actions } from "./appState";
 export {
   appState,
   dataState,
-  selectionState,
   plotState,
   uiState,
   actions,
@@ -23,9 +22,6 @@ export {
   selectorOptions,
 
   // Backward compatibility exports (for components not yet migrated)
-  selectedChannelIndex,
-  selectedTrcIndex,
-  selectedSegmentIndex,
   rawStore,
   overviewStore,
   zarrGroup,
