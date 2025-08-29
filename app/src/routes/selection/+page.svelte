@@ -6,27 +6,19 @@
     import { CircleAlert } from '@lucide/svelte';
     import ShareButton from '../../components/ShareButton.svelte';
     import LoadingState from '../../components/LoadingState.svelte';
-    import { openZarr } from '../../services/dataService';
-    import { calculateDatasetInfoFrom } from './selectionUtils';
+    import { openZarr, calculateDatasetInfoFrom } from '../../services/dataService';
     import DatasetInfo from '../../components/DatasetInfo.svelte';
     import SelectionForm from '../../components/SelectionForm.svelte';
+    import { parseParamInt, stripURLFromHashAndAttributes } from '../../utils/urlParams';
+    import MissingDataState from '../../components/MissingDataState.svelte';
 
-    function parseParamInt(name: string, defaultValue: number = 1): number {
-        const value = parseInt(page.url.searchParams.get(name) || '');
-        return isNaN(value) ? defaultValue : value;
-    }
 
     const dataURLParam: string | null = $derived(page.url.searchParams.get('data'));
     const channelURLParam: number = $derived(parseParamInt('ch'));
     const trcURLParam: number = $derived(parseParamInt('trc'));
     const segmentURLParam: number = $derived(parseParamInt('seg'));
     const currentHref: string = $derived(page.url.toString());
-    const baseSelectionUrl = $derived(() => {
-        const url = new URL(page.url);
-        url.search = "";
-        url.hash = "";
-        return url.toString();
-    });
+    const baseSelectionUrl = $derived(stripURLFromHashAndAttributes(page.url.toString()));
 
     let datasetState: { loading: boolean; ready: boolean; error: string | null } = $state({
         loading: false,
@@ -82,21 +74,7 @@
     </div>
 
     {#if !dataURLParam}
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-            <div class="flex items-center mb-2">
-                <div class="w-5 h-5 text-yellow-600 mr-2">
-                    <CircleAlert />
-                </div>
-                <h3 class="text-yellow-800 font-medium">Missing dataset</h3>
-            </div>
-            <p class="text-yellow-700 mb-2">No <code>data</code> query parameter was provided in the URL.</p>
-            <p class="text-sm text-gray-600 mb-2">Current URL: {currentHref}</p>
-            <p class="text-sm text-gray-600 mb-2">Expected: <code>{baseSelectionUrl()}?data=&lt;URL-to-zarr&gt;</code></p>
-            <p class="text-sm text-gray-600 mb-4">for example <code>{baseSelectionUrl()}?data=https://example.com/path/to/example.zarr</code></p>
-            <button class="btn-secondary btn-sm" onclick={() => goto(resolve('/'))}>
-                ← Enter dataset URL
-            </button>
-        </div>
+        <MissingDataState />
     {:else if datasetState.loading}
         <LoadingState loadingMessage="Loading dataset information..." />
     {:else if datasetState.error}

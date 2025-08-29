@@ -39,7 +39,6 @@
 </script>
 
 <div class="flex flex-col gap-6">
-    Data = {dataURLParam} <br>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="flex flex-col">
             <label for="channel-select" class="mb-2 font-semibold text-gray-600">Channel:</label>
