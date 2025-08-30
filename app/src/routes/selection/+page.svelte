@@ -4,13 +4,14 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { CircleAlert } from '@lucide/svelte';
-  import ShareButton from '../../components/ShareButton.svelte';
-  import LoadingState from '../../components/LoadingState.svelte';
+  import { parseParamInt } from '../../utils/urlParams';
   import { openZarr, calculateDatasetInfoFrom } from '../../services/dataService';
   import DatasetInfo from '../../components/DatasetInfo.svelte';
+  import ShareButton from '../../components/ShareButton.svelte';
+  import CannotLoadState from '../../components/status/CannotLoadState.svelte';
+  import LoadingState from '../../components/status/LoadingState.svelte';
+  import MissingDataState from '../../components/status/MissingDataState.svelte';
   import SelectionForm from '../../components/SelectionForm.svelte';
-  import { parseParamInt } from '../../utils/urlParams';
-  import MissingDataState from '../../components/MissingDataState.svelte';
 
   const dataURLParam: string | null = $derived(page.url.searchParams.get('data'));
   const channelURLParam: number = $derived(parseParamInt('ch'));
@@ -74,20 +75,9 @@
   {:else if datasetState.loading}
     <LoadingState message="Loading dataset information from {dataURLParam}..." />
   {:else if datasetState.error}
-    <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-      <div class="flex items-center mb-2">
-        <div class="w-5 h-5 text-red-600 mr-2">
-          <CircleAlert />
-        </div>
-        <h3 class="text-red-800 font-medium">
-          Error Loading Dataset from {dataURLParam}
-        </h3>
-      </div>
-      <p class="text-red-700 mb-4">{datasetState.error}</p>
-      <button class="btn-secondary btn-sm" onclick={() => goto(resolve('/'))}> ← Try Different Dataset </button>
-    </div>
+    <CannotLoadState dataURLParam={dataURLParam} error={datasetState.error} />
   {:else if datasetState.ready}
-    <div class="space-y-6">
+      <div class="space-y-6">
       {#if datasetInfo}
         <DatasetInfo {datasetInfo} datasetUrl={dataURLParam} />
       {:else}
