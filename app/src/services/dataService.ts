@@ -99,6 +99,20 @@ export async function getRawDataSlice(
   return finalData;
 }
 
+export async function getAttrs(zarrGroup: any): Promise<any> {
+  if (!zarrGroup) return {};
+  try {
+    return (await zarrGroup.attrs.asObject()) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+export async function getHorizInterval(zarrGroup: any): Promise<number> {
+  const attrs = await getAttrs(zarrGroup);
+  return attrs.horiz_interval || -1;
+}
+
 export async function calculateDatasetInfoFrom(rawStore: any, overviewStore: any, zarrGroup: any) {
   // Return a minimal datasetInfo object or throw with a descriptive message
   if (!rawStore?.shape) throw new Error('rawStore missing shape information');
@@ -115,7 +129,7 @@ export async function calculateDatasetInfoFrom(rawStore: any, overviewStore: any
     attrs = {};
   }
 
-  const horizInterval = attrs.horiz_interval || attrs.horizontal_interval || 1000;
+  const horizInterval = attrs.horiz_interval || -1;
   const timeBetweenPoints = horizInterval ? (horizInterval / 1000) : 0.001;
   const segmentLength = (pointsInSegment && timeBetweenPoints) ? (pointsInSegment * timeBetweenPoints) : 0;
 

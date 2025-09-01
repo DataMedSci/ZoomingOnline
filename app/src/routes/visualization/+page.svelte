@@ -1,147 +1,156 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
-    import { resolve } from '$app/paths';
-    import { page } from '$app/state';
-    import { openZarr } from '../../services/dataService';
-    
-    import Charts from '../../components/chart/Charts.svelte';
-    import ShareButton from '../../components/ShareButton.svelte';
-    import { onMount, onDestroy } from 'svelte';
-    import {
-        getSelectionParamsFromUrl,
-        buildUrlWithParams,
-        validateSelectionParams
-    } from '../../utils/urlParams';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
+  import { page } from '$app/state';
+  import { CircleAlert } from '@lucide/svelte';
+  import { parseParamInt } from '../../utils/urlParams';
+  import { openZarr, calculateDatasetInfoFrom, getHorizInterval } from '../../services/dataService';
+  import ShareButton from '../../components/ShareButton.svelte';
+  import CannotLoadState from '../../components/status/CannotLoadState.svelte';
+  import LoadingState from '../../components/status/LoadingState.svelte';
+  import MissingDataState from '../../components/status/MissingDataState.svelte';
+  import SelectionForm from '../../components/SelectionForm.svelte';
+  import { generateZoomLevelsWithLabels } from '../../utils/zoomLevels';
+  import ZoomControls from '../../components/chart/ZoomControls.svelte';
 
-    // Local component state using runes
-    let hasInitialized = $state(false);
+  const defaultFirstZoomLevel: number = 3;
+  const defaultFirstZoomFractionPos: number = 0.5;
+  const defaultSecondZoomLevel: number = 3;
+  const defaultSecondZoomFractionPos: number = 0.5;
 
-    // Local loaded Zarr handles
-    let zarrGroup = $state<any | null>(null);
-    let rawStore = $state<any | null>(null);
-    let overviewStore = $state<any | null>(null);
-    let loading = $state(false);
-    let error = $state<string | null>(null);
+  const dataURLParam: string | null = $derived(page.url.searchParams.get('data'));
+  const channelURLParam: number = $derived(parseParamInt('ch'));
+  const trcURLParam: number = $derived(parseParamInt('trc'));
+  const segmentURLParam: number = $derived(parseParamInt('seg'));
 
-    // Derived selector options from loaded rawStore
-    const selectorOptions = $derived(() => {
-        if (!rawStore?.shape) return { channels: [], trcFiles: [], segments: [] };
-        const [channelCount, trcCount, segmentCount] = rawStore.shape;
-        return {
-            channels: Array.from({ length: channelCount || 0 }, (_, i) => `${i + 1}`),
-            trcFiles: Array.from({ length: trcCount || 0 }, (_, i) => `${i + 1}`),
-            segments: Array.from({ length: segmentCount || 0 }, (_, i) => `${i + 1}`),
-        };
-    });
+  let zoom1LevelParam: number = $derived(parseParamInt('z1level', defaultFirstZoomLevel));
+  let zoom1IndexPosParam: number = $derived(parseParamInt('z1pos', -1));
+  let zoom2LevelParam: number = $derived(parseParamInt('z2level', defaultSecondZoomLevel));
+  let zoom2IndexPosParam: number = $derived(parseParamInt('z2pos', -1));
 
-    // Get validated selection parameters from URL
-    const validatedParams = $derived(() => {
-        // Only validate when selectorOptions are populated
-        const opts = selectorOptions || { channels: [], trcFiles: [], segments: [] };
-        const rawParams = getSelectionParamsFromUrl();
-        return validateSelectionParams(rawParams, opts);
-    });
+  let datasetState: {
+    loading: boolean;
+    ready: boolean;
+    error: string | null;
+  } = $state({
+    loading: false,
+    ready: false,
+    error: null as string | null,
+  });
 
-    // NOTE: We intentionally avoid deriving numeric indices at this layer.
-    // The Charts component accepts selection values (channel/trc/segment)
-    // and normalizes to internal indices as needed. This keeps naming
-    // consistent across the app and supports arbitrary value schemes.
+  let channelCount: number = $state(0);
+  let trcCount: number = $state(0);
+  let segmentCount: number = $state(0);
+  let samplesCount: number = $state(0);
 
-    // Global store access using derived runes
-    const plotReady = $derived($isDataReadyForPlot);
-    const loading = $derived($isLoading);
-    const dataLoaded = $derived($isDataLoaded);
+  let zoom1DefaultLevels = $state({});
+  let timeBetweenSamplesSec: number = $state(0);
+  let segmentDurationSec: number = $state(0);
 
-    // Add/remove visualization-page class to body
-    onMount(() => {
-        document.body.classList.add('visualization-page');
+  onMount(async () => {
+    if (!dataURLParam) return;
 
-        // Auto-load data when page mounts if URL param is present
-        const url = new URL(page.url).searchParams.get('data');
-        if (url) {
-            loadDataFromUrl(url).catch(e => {
-                error = e instanceof Error ? e.message : String(e);
-            });
-        }
-    });
+    datasetState = { loading: true, ready: false, error: null };
+    try {
+      const zarrDataSet = await openZarr(dataURLParam);
+      try {
+        [channelCount, trcCount, segmentCount, samplesCount] = await zarrDataSet.rawStore.shape;
+        // derive default zoom positions if not explicitly set
+        zoom1IndexPosParam = zoom1IndexPosParam === -1 ? Math.floor(defaultFirstZoomFractionPos * samplesCount) : zoom1IndexPosParam;
+        zoom2IndexPosParam = zoom2IndexPosParam === -1 ? Math.floor(defaultSecondZoomFractionPos * samplesCount) : zoom2IndexPosParam;
 
-    onDestroy(() => {
-        document.body.classList.remove('visualization-page');
-    });
-
-    // Navigation guard using runes effect
-    $effect(() => {
-        // Guard: if visualization isn't ready (no data), navigate back to selection
-        const plotReady = !!rawStore && !!overviewStore && !!zarrGroup;
-        if (!plotReady && !loading && hasInitialized) {
-            const currentParams = getSelectionParamsFromUrl();
-            const selectionUrl = buildUrlWithParams(`${resolve('/selection')}`, currentParams);
-            goto(selectionUrl);
-            return;
-        }
-
-        if (plotReady && !hasInitialized) {
-            hasInitialized = true;
-        }
-    });
-
-    async function loadDataFromUrl(url: string) {
-        loading = true;
-        error = null;
-        try {
-            const loaded = await openZarr(url);
-            zarrGroup = loaded.zarrGroup;
-            rawStore = loaded.rawStore;
-            overviewStore = loaded.overviewStore;
-        } catch (err) {
-            error = err instanceof Error ? err.message : String(err);
-            throw err;
-        } finally {
-            loading = false;
-        }
+        timeBetweenSamplesSec = await getHorizInterval(zarrDataSet.zarrGroup);
+        segmentDurationSec = timeBetweenSamplesSec * samplesCount;
+        zoom1DefaultLevels = generateZoomLevelsWithLabels(timeBetweenSamplesSec, segmentDurationSec);
+      } catch (infoErr) {
+        console.warn('Error deriving info:', infoErr);
+      }
+      datasetState = { loading: false, ready: true, error: null };
+    } catch (e) {
+      datasetState = {
+        loading: false,
+        ready: false,
+        error: e instanceof Error ? e.message : String(e),
+      };
     }
+  });
 
-    function handleGoBack() {
-        // Preserve all current parameters when going back to selection
-        const currentParams = getSelectionParamsFromUrl();
-        const selectionUrl = buildUrlWithParams(`${resolve('/selection')}`, currentParams);
-        goto(selectionUrl);
-    }
+  function selectData() {
+    goto(`${resolve('/selection')}?data=${dataURLParam}&ch=${channelURLParam}&trc=${trcURLParam}&seg=${segmentURLParam}`);
+  }
 </script>
 
 <svelte:head>
-    <title>Data Visualization - ZoomingOnline</title>
+  <title>Data Visualization - ZoomingOnline</title>
+  <meta name="description" content="Visualize your dataset with ease" />
 </svelte:head>
 
-{#if rawStore && zarrGroup}
-    <div class="w-full">
-        <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-md">
-            <div class="flex items-center gap-4">
-                <button class="btn-primary btn-sm" onclick={handleGoBack}>
-                    ← Back to Selection
-                </button>
-                <div class="flex items-center gap-2 text-sm text-gray-600">
-                    <span class="font-semibold text-gray-800">Channel:</span>
-                    <span class="text-blue-600 font-medium">{validatedParams.channel}</span>
-                    <span class="text-gray-500 mx-1">|</span>
-                    <span class="font-semibold text-gray-800">TRC:</span>
-                    <span class="text-blue-600 font-medium">{validatedParams.trc}</span>
-                    <span class="text-gray-500 mx-1">|</span>
-                    <span class="font-semibold text-gray-800">Segment:</span>
-                    <span class="text-blue-600 font-medium">{validatedParams.segment}</span>
-                </div>
-            </div>
-            <ShareButton />
-        </div>
-        
-        <Charts rawStore={rawStore} overviewStore={overviewStore} zarrGroup={zarrGroup} channel={validatedParams.channel} trc={validatedParams.trc} segment={validatedParams.segment} />
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Visualize</h1>
     </div>
-{/if}
+    <ShareButton />
+  </div>
 
-{#if loading}
-    <div class="p-6">
-        <p>Loading data...</p>
+  {#if !dataURLParam}
+    <MissingDataState />
+  {:else if datasetState.loading}
+    <LoadingState message="Loading dataset information from {dataURLParam}..." />
+  {:else if datasetState.error}
+    <CannotLoadState {dataURLParam} error={datasetState.error} />
+  {:else if datasetState.ready}
+    <div class="w-full">
+      <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-md">
+        <div class="flex-col items-center gap-4">
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <span class="font-semibold text-gray-800">Channel:</span>
+            <span class="text-blue-600 font-medium">{channelURLParam} / {channelCount}</span>
+            <span class="text-gray-500 mx-1">|</span>
+            <span class="font-semibold text-gray-800">TRC:</span>
+            <span class="text-blue-600 font-medium">{trcURLParam} / {trcCount}</span>
+            <span class="text-gray-500 mx-1">|</span>
+            <span class="font-semibold text-gray-800">Segment:</span>
+            <span class="text-blue-600 font-medium">{segmentURLParam} / {segmentCount}</span>
+            <span class="text-gray-500 mx-1">|</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <span class="font-semibold text-gray-800">Samples per segment:</span>
+            <span class="text-blue-600 font-medium">{samplesCount}</span>
+            <span class="text-gray-500 mx-1">|</span>
+            <span class="font-semibold text-gray-800">Time between samples:</span>
+            <span class="text-blue-600 font-medium">{timeBetweenSamplesSec}s</span>
+            <span class="text-gray-500 mx-1">|</span>
+            <span class="font-semibold text-gray-800">Segment duration:</span>
+            <span class="text-blue-600 font-medium">{segmentDurationSec}s</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <span class="font-semibold text-gray-800">Zoom 1:</span>
+            <span class="text-blue-600 font-medium">Level {zoom1LevelParam} @ {zoom1IndexPosParam}</span>
+            <span class="text-gray-500 mx-1">|</span>
+            <span class="font-semibold text-gray-800">Zoom 2:</span>
+            <span class="text-blue-600 font-medium">Level {zoom2LevelParam} @ {zoom2IndexPosParam}</span>
+          </div>
+          <button class="p-2 bg-emerald-500 text-white font-medium rounded-lg hover:scale-105 w-full md:w-auto max-w-xs" onclick={selectData}>Select Data</button>
+          <div class="mt-4">
+            {#if Object.keys(zoom1DefaultLevels).length > 0}
+              <div class="text-sm text-gray-600">
+                <span class="font-semibold text-gray-800">Zoom Levels:</span>
+                <div class="flex flex-col gap-2 mt-2">
+                  {#each Object.entries(zoom1DefaultLevels) as [level, label]}
+                    <span class="text-blue-600 font-medium">Level {level}: value: {label.value} / label: {label.label}</span>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+          </div>
+          <ZoomControls timeBetweenPoints={timeBetweenSamplesSec} segmentDuration={segmentDurationSec} />
+        </div>
+        <ShareButton />
+      </div>
+
+      <!-- <Charts {rawStore} {overviewStore} {zarrGroup} channel={validatedParams.channel} trc={validatedParams.trc} segment={validatedParams.segment} /> -->
     </div>
-{:else if error}
-    <div class="p-6 text-red-600">{error}</div>
-{/if}
+  {/if}
+</div>

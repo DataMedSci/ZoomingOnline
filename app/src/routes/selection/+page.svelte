@@ -75,9 +75,9 @@
   {:else if datasetState.loading}
     <LoadingState message="Loading dataset information from {dataURLParam}..." />
   {:else if datasetState.error}
-    <CannotLoadState dataURLParam={dataURLParam} error={datasetState.error} />
+    <CannotLoadState {dataURLParam} error={datasetState.error} />
   {:else if datasetState.ready}
-      <div class="space-y-6">
+    <div class="space-y-6">
       {#if datasetInfo}
         <DatasetInfo {datasetInfo} datasetUrl={dataURLParam} />
       {:else}
