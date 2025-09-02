@@ -2,7 +2,7 @@
     import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { page } from '$app/state';
-    import { openZarr } from '../../services/dataService';
+    import { openZarr } from '../../lib/dataService';
     
     import Charts from '../../components/chart/Charts.svelte';
     import ShareButton from '../../components/ShareButton.svelte';
@@ -11,7 +11,7 @@
         getSelectionParamsFromUrl,
         buildUrlWithParams,
         validateSelectionParams
-    } from '../../utils/urlParams';
+    } from '../../lib/urlParams';
 
     // Local component state using runes
     let hasInitialized = $state(false);

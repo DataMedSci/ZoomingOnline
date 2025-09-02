@@ -3,7 +3,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { CircleAlert } from '@lucide/svelte';
-  import { stripURLFromHashAndAttributes } from '../../utils/urlParams';
+  import { stripURLFromHashAndAttributes } from '../../lib/urlParams';
 
   const currentURL: string = $derived(page.url.toString());
   const baseSelectionUrl = $derived(stripURLFromHashAndAttributes(page.url.toString()));

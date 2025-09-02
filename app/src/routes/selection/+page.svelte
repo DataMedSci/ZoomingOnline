@@ -1,11 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import { CircleAlert } from '@lucide/svelte';
-  import { parseParamInt } from '../../utils/urlParams';
-  import { openZarr, calculateDatasetInfoFrom } from '../../services/dataService';
+  import { parseParamInt } from '$lib/urlParams';
+  import { openZarr, calculateDatasetInfoFrom } from '$lib/dataService';
   import DatasetInfo from '../../components/DatasetInfo.svelte';
   import ShareButton from '../../components/ShareButton.svelte';
   import CannotLoadState from '../../components/status/CannotLoadState.svelte';

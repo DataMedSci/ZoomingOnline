@@ -4,8 +4,8 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { CircleAlert } from '@lucide/svelte';
-  import { parseParamInt } from '../../utils/urlParams';
-  import { openZarr, calculateDatasetInfoFrom, getHorizInterval } from '../../services/dataService';
+  import { parseParamInt } from '../../lib/urlParams';
+  import { openZarr, getHorizInterval } from '$lib/dataService';
   import ShareButton from '../../components/ShareButton.svelte';
   import CannotLoadState from '../../components/status/CannotLoadState.svelte';
   import LoadingState from '../../components/status/LoadingState.svelte';
