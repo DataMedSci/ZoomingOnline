@@ -21,33 +21,9 @@
   <!-- Zoom Level -->
   <div class="mb-6">
     <div class="flex gap-2 mb-4">
-      <button
-        title="Zoom In"
-        disabled={!canZoomIn}
-        onclick={() => (selectedZoomLevel += 1)}
-        class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer {canZoomIn
-          ? 'bg-emerald-500 hover:bg-emerald-600 hover:-translate-y-0.5'
-          : 'bg-gray-400 cursor-not-allowed'}"
-      >
-        ➕ In
-      </button>
-      <button
-        title="Reset to defaults"
-        onclick={() => (selectedZoomLevel = defaultsZoomLevel)}
-        class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer bg-blue-500 hover:bg-blue-600 hover:-translate-y-0.5"
-      >
-        🎯 Defaults
-      </button>
-      <button
-        title="Zoom Out"
-        disabled={!canZoomOut}
-        onclick={() => (selectedZoomLevel -= 1)}
-        class="flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all cursor-pointer {canZoomOut
-          ? 'bg-amber-500 hover:bg-amber-600 hover:-translate-y-0.5'
-          : 'bg-gray-400 cursor-not-allowed'}"
-      >
-        ➖ Out
-      </button>
+      <button disabled={!canZoomIn} onclick={() => (selectedZoomLevel += 1)} class="flex-1 p-2 rounded bg-emerald-500 text-white disabled:bg-gray-400"> ➕ In </button>
+      <button onclick={() => (selectedZoomLevel = defaultsZoomLevel)} class="flex-1 p-2 rounded bg-blue-500 text-white"> 🎯 Defaults </button>
+      <button disabled={!canZoomOut} onclick={() => (selectedZoomLevel -= 1)} class="flex-1 p-2 rounded bg-amber-500 text-white disabled:bg-gray-400"> ➖ Out </button>
     </div>
 
     <div class="mb-2">
