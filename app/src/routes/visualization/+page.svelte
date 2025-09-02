@@ -145,7 +145,7 @@
               </div>
             {/if}
           </div>
-          <ZoomControls timeBetweenPoints={timeBetweenSamplesSec} segmentDuration={segmentDurationSec} />
+          <ZoomControls bind:zoomLevel={zoom1LevelParam} timeBetweenPoints={timeBetweenSamplesSec} segmentDuration={segmentDurationSec} />
         </div>
         <ShareButton />
       </div>
