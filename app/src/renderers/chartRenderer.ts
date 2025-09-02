@@ -6,7 +6,7 @@
  */
 
 import * as d3 from "d3";
-import { formatTime } from "../utils/mathUtils";
+import { formatTime } from "../lib/mathUtils";
 
 // Type definitions
 export interface ChartMargin {
@@ -408,7 +408,7 @@ export function drawZoomRectangle(
   // Create the visible rectangle
   const actualWidth = Math.max(width, 3); // Minimum width of 3 pixels for visibility
   console.log("🎨 Creating visible rectangle with width:", actualWidth, "(minimum applied:", actualWidth !== width, ")");
-  
+
   const rect = svg
     .append("rect")
     .attr("class", "zoom-rect")

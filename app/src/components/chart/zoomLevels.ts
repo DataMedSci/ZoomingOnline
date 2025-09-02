@@ -5,7 +5,7 @@
  * with multiplicative factors of 1, 2, and 5.
  */
 
-import { formatTime } from "./mathUtils.js";
+import { formatTime } from "$lib/mathUtils.js";
 
 /**
  * Generates scale levels (multiples of 1, 2, 5 × 10^n) within a numeric range.

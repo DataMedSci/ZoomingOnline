@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatTime, formatFileSize } from '../utils/mathUtils';
+  import { formatTime, formatFileSize } from '../lib/mathUtils';
 
   const {
     datasetInfo,

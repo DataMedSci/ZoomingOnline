@@ -5,7 +5,7 @@
  * It provides pure functions for converting between different zoom representations.
  */
 
-import { generateZoomLevelsWithLabels } from "../utils/zoomLevels";
+import { generateZoomLevelsWithLabels } from "../components/chart/zoomLevels";
 import type { PlotConfig } from "../types/stores";
 
 export class ZoomService {

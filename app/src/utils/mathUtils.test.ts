@@ -5,7 +5,7 @@ import {
   formatFrequency,
   formatVoltage,
   formatWithSI,
-} from "./mathUtils.js";
+} from "../lib/mathUtils.js";
 
 describe("mathUtils", () => {
   describe("formatTime", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateZoomLevels, generateZoomLevelsWithLabels } from "./zoomLevels";
+import { generateZoomLevels, generateZoomLevelsWithLabels } from "../components/chart/zoomLevels";
 
 describe("zoomLevels utilities", () => {
   describe("generateZoomLevels", () => {
