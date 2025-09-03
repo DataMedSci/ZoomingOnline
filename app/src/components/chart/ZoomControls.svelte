@@ -5,13 +5,13 @@
   let { zoomLevel = $bindable(), minZoomWindow, maxZoomWindow, defaultZoomLevel } = $props();
 
   // State using $state rune
-  let selectedZoomLevel = $derived(zoomLevel);
-  const canZoomOut = $derived(selectedZoomLevel > 0);
+  // let selectedZoomLevel = $derived(zoomLevel);
+  const canZoomOut = $derived(zoomLevel > 0);
 
   // Generate zoom levels dynamically based on data characteristics
   const zoomLevels = $derived(minZoomWindow && maxZoomWindow ? generateZoomLevelsWithLabels(minZoomWindow, maxZoomWindow) : []);
   const numberOfZoomLevels = $derived(zoomLevels.length);
-  const canZoomIn = $derived(selectedZoomLevel < numberOfZoomLevels - 1);
+  const canZoomIn = $derived(zoomLevel < numberOfZoomLevels - 1);
 </script>
 
 <div class="zoom-controls bg-white p-3 rounded-lg shadow-md min-w-[200px] max-w-[240px]">
@@ -19,13 +19,13 @@
 
   <div class="mb-6">
     <div class="flex gap-2 mb-4">
-      <button disabled={!canZoomIn} onclick={() => (selectedZoomLevel += 1)} class="flex-1 p-2 rounded bg-emerald-500 text-white disabled:bg-gray-400"> ➕ In </button>
-      <button onclick={() => (selectedZoomLevel = defaultZoomLevel)} class="flex-1 p-2 rounded bg-blue-500 text-white"> 🎯 Defaults </button>
-      <button disabled={!canZoomOut} onclick={() => (selectedZoomLevel -= 1)} class="flex-1 p-2 rounded bg-amber-500 text-white disabled:bg-gray-400"> ➖ Out </button>
+      <button disabled={!canZoomIn} onclick={() => (zoomLevel += 1)} class="flex-1 p-2 rounded bg-emerald-500 text-white disabled:bg-gray-400"> ➕ In </button>
+      <button onclick={() => (zoomLevel = defaultZoomLevel)} class="flex-1 p-2 rounded bg-blue-500 text-white"> 🎯 Defaults </button>
+      <button disabled={!canZoomOut} onclick={() => (zoomLevel -= 1)} class="flex-1 p-2 rounded bg-amber-500 text-white disabled:bg-gray-400"> ➖ Out </button>
     </div>
 
     <div class="mb-2">
-      <select id="zoomSelect" bind:value={selectedZoomLevel} class="w-full rounded-lg border p-2 text-sm cursor-pointer bg-white focus:ring focus:ring-blue-100">
+      <select id="zoomSelect" bind:value={zoomLevel} class="w-full rounded-lg border p-2 text-sm cursor-pointer bg-white focus:ring focus:ring-blue-100">
         {#each zoomLevels as zoomObject, zoomIndex}
           <option value={zoomIndex}>
             {zoomObject.label}

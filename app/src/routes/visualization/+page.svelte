@@ -38,11 +38,6 @@
     error: null as string | null,
   });
 
-  // let channelCount: number = $state(0);
-  // let trcCount: number = $state(0);
-  // let segmentCount: number = $state(0);
-  // let samplesCount: number = $state(0);
-
   let zoom1DefaultLevels = $state(Array<{ value: number; label: string }>());
   let zoom2DefaultLevels = $state(Array<{ value: number; label: string }>());
   let timeBetweenSamplesSec: number = $state(0);

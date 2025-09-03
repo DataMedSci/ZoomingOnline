@@ -18,11 +18,11 @@ export function generateZoomLevels(
   upperLimit: number,
 ): number[] {
   if (lowerLimit <= 0 || upperLimit <= 0) {
-    throw new Error("Both limits must be positive numbers");
+    console.log("Both limits must be positive numbers");
   }
 
   if (lowerLimit >= upperLimit) {
-    throw new Error("lowerLimit must be smaller than upperLimit");
+    console.log("lowerLimit must be smaller than upperLimit");
   }
 
   const factors = [1, 2, 5];
@@ -49,6 +49,11 @@ export function generateZoomLevels(
     .sort((a, b) => a - b);
 }
 
+export type ZoomLevel = {
+  value: number;
+  label: string;
+};
+
 /**
  * Generates zoom levels with human-readable labels
  * @param lowerLimit - The minimum time resolution between data points (in seconds)
@@ -58,11 +63,13 @@ export function generateZoomLevels(
 export function generateZoomLevelsWithLabels(
   lowerLimit: number,
   upperLimit: number,
-): Array<{ value: number; label: string }> {
+): ZoomLevel[] {
   const zoomLevels = generateZoomLevels(lowerLimit, upperLimit);
 
-  return zoomLevels.map((level) => ({
-    value: level,
-    label: formatTime(level, 3),
-  }));
+  return zoomLevels.map(
+    (level): ZoomLevel => ({
+      value: level,
+      label: formatTime(level, 3),
+    }),
+  );
 }

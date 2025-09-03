@@ -1,7 +1,12 @@
 <script lang="ts">
-  import { openZarr } from '$lib/dataService';
-  import ShareButton from './ShareButton.svelte';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
+  import { getHorizInterval, openZarr } from '$lib/dataService';
+  import { formatTime } from '$lib/mathUtils';
+  import ZoomControls from './chart/ZoomControls.svelte';
+  import { generateZoomLevelsWithLabels, type ZoomLevel } from './chart/zoomLevels';
+  import ShareButton from './ShareButton.svelte';
 
   let {
     dataURLParam,
@@ -23,19 +28,43 @@
     defaultZoom2IndexPos?: number;
   } = $props();
 
-  let shape: number[] = [];
-  let channelCount: number = 0;
-  let trcCount: number = 0;
-  let segmentCount: number = 0;
-  let samplesCount: number = 0;
+  let shape: number[] = $state([]);
+  let channelCount: number = $state(0);
+  let trcCount: number = $state(0);
+  let segmentCount: number = $state(0);
+  let samplesCount: number = $state(0);
+
+  let timeBetweenSamplesSec: number = $state(0);
+  let segmentDurationSec: number = $derived(timeBetweenSamplesSec * samplesCount);
+  let zoom1DefaultLevels: ZoomLevel[] = $derived(generateZoomLevelsWithLabels(timeBetweenSamplesSec, segmentDurationSec));
+  let zoom1LevelParam: number = $state(-1);
+  let zoom2DefaultLevels: ZoomLevel[] = $derived(generateZoomLevelsWithLabels(timeBetweenSamplesSec, segmentDurationSec));
+  let zoom2LevelParam: number = $state(-1);
 
   onMount(async () => {
-    const { zarrGroup, rawStore, overviewStore } = await openZarr(dataURLParam);
-    shape = await rawStore.shape;
+    const { zarrGroup, rawStore } = await openZarr(dataURLParam);
+    shape = (await rawStore.shape) as number[];
+    timeBetweenSamplesSec = await getHorizInterval(zarrGroup);
+    segmentDurationSec = zarrGroup.attrs['segment_length'] || 0;
     samplesCount = shape.length === 4 ? shape[3] : 0;
     trcCount = shape.length >= 2 ? shape[1] : 0;
     segmentCount = shape.length >= 3 ? shape[2] : 0;
     channelCount = shape.length >= 1 ? shape[0] : 0;
+  });
+
+  $effect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('ch', channelIndex.toString());
+    params.set('trc', trcIndex.toString());
+    params.set('seg', segmentIndex.toString());
+    params.set('data', dataURLParam);
+    params.set('z1level', zoom1LevelParam.toString());
+    // params.set('z1pos', zoom1LevelParam.toString());
+    params.set('z2level', zoom2LevelParam.toString());
+    // params.set('z2pos', zoom2LevelParam.toString());
+    goto(`${resolve('/visualization')}?${params.toString()}`, {
+      replaceState: true,
+    });
   });
 </script>
 
@@ -68,16 +97,16 @@
         <span class="text-blue-600 font-medium">{segmentIndex} / {segmentCount}</span>
         <span class="text-gray-500 mx-1">|</span>
       </div>
-      <!-- <div class="flex items-center gap-2 text-sm text-gray-600">
+      <div class="flex items-center gap-2 text-sm text-gray-600">
         <span class="font-semibold text-gray-800">Samples per segment:</span>
         <span class="text-blue-600 font-medium">{samplesCount}</span>
         <span class="text-gray-500 mx-1">|</span>
         <span class="font-semibold text-gray-800">Time between samples:</span>
-        <span class="text-blue-600 font-medium">{timeBetweenSamplesSec}s</span>
+        <span class="text-blue-600 font-medium">{formatTime(timeBetweenSamplesSec)}</span>
         <span class="text-gray-500 mx-1">|</span>
         <span class="font-semibold text-gray-800">Segment duration:</span>
-        <span class="text-blue-600 font-medium">{segmentDurationSec}s</span>
-      </div> -->
+        <span class="text-blue-600 font-medium">{formatTime(segmentDurationSec)}</span>
+      </div>
       <div class="flex items-center gap-2 text-sm text-gray-600">
         <span class="font-semibold text-gray-800">Zoom 1:</span>
         <span class="text-blue-600 font-medium">Level {defaultZoom1Level} @ {defaultZoom1IndexPos}</span>
@@ -86,8 +115,8 @@
         <span class="text-blue-600 font-medium">Level {defaultZoom2Level} @ {defaultZoom2IndexPos}</span>
       </div>
       <!-- <button class="p-2 bg-emerald-500 text-white font-medium rounded-lg hover:scale-105 w-full md:w-auto max-w-xs" onclick={selectData}>Select Data</button> -->
-      <div class="mt-4">
-        <!-- {#if Object.keys(zoom1DefaultLevels).length > 0}
+      <!-- <div class="mt-4">
+        {#if Object.keys(zoom1DefaultLevels).length > 0}
           <div class="text-sm text-gray-600">
             <span class="font-semibold text-gray-800">Zoom 1 Levels:</span>
             <div class="flex flex-col gap-2 mt-2">
@@ -96,9 +125,10 @@
               {/each}
             </div>
           </div>
-        {/if} -->
-      </div>
-      <!-- <ZoomControls bind:zoomLevel={zoom1LevelParam} minZoomWindow={timeBetweenSamplesSec} maxZoomWindow={segmentDurationSec} defaultZoomLevel={defaultZoom1Level} />
+        {/if}
+      </div> -->
+      <ZoomControls bind:zoomLevel={zoom1LevelParam} minZoomWindow={timeBetweenSamplesSec} maxZoomWindow={segmentDurationSec} defaultZoomLevel={defaultZoom1Level} />
+      <!--
       <ZoomControls
         bind:zoomLevel={zoom2LevelParam}
         minZoomWindow={timeBetweenSamplesSec}
