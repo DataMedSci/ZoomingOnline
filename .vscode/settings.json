@@ -1,0 +1,13 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
+    "prettier.printWidth": 200,
+    "editor.rulers": [
+        200
+    ],
+    "editor.wordWrapColumn": 200,
+    "editor.formatOnSave": true,
+    "[svelte]": {
+        "editor.defaultFormatter": "svelte.svelte-vscode"
+    }
+}

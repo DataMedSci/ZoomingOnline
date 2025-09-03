@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Svelte App to GitHub Pages
 
 on:
   push:
@@ -17,10 +17,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install dependencies
+        working-directory: ./app
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Svelte app
+        working-directory: ./app
+        run: pnpm run build
+
       - name: Prepare site
         run: |
-          mkdir -p site/js
-          cp -R website/. site/
+          mkdir -p site
+          cp -R app/dist/. site/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -29,5 +47,5 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4    
+        uses: actions/deploy-pages@v4
 

@@ -1,12 +1,5 @@
 {
-  "name": "zooming-online-tests",
-  "version": "1.0.0",
-  "description": "Browser tests for ZoomingOnline",
-  "private": true,
-  "scripts": {
-    "test": "playwright test tests/browser.spec.js"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.54.1"
+  "dependencies": {
+    "uplot": "^1.6.32"
   }
 }
