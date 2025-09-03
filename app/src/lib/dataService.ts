@@ -16,7 +16,6 @@ export async function openZarr(url: string): Promise<{
   zarrGroup: any;
   rawStore: any;
   overviewStore: any | null;
-  url: string;
 }> {
   // Create HTTP store for remote access
   const store = new HTTPStore(url);
@@ -51,7 +50,7 @@ export async function openZarr(url: string): Promise<{
     overview = null;
   }
 
-  return { zarrGroup: group, rawStore: raw, overviewStore: overview, url };
+  return { zarrGroup: group, rawStore: raw, overviewStore: overview };
 }
 
 /**
